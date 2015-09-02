@@ -43,7 +43,7 @@ cp $SLURM_SUBMIT_DIR/2D_N-$2_gaps-$3_G-$6_badanie-$9_mN-6_mS-$4_mD-$5/j-$1_Confi
    rm -r $TMPDIR/tmp_mb1991_$SLURM_JOB_ID
 
    cd $SLURM_SUBMIT_DIR
-   sbatch --job-name=G$6B$9P$(($7 + $8 - 1)) --output=output/OUT_HCH$2_gaps-$3_mS-$4_mD-$5_G-$6_B-$9_P-$(($7 + $8 - 1))_%j.txt --error=output/ERR_HCH$2_gaps-$3_mS-$4_mD-$5_G-$6_B-$9_P-$(($7 + $8 - 1))_%j.txt sbatchTMPRecursion $SLURM_JOBID $2 $3 $4 $5 $6 $(($7 + $8 - 1)) $8 $9 ${10};
+   sbatch --job-name=G$6B$9P$(($7 + $8)) --output=output/OUT_HCH$2_gaps-$3_mS-$4_mD-$5_G-$6_B-$9_P-$(($7 + $8))_%j.txt --error=output/ERR_HCH$2_gaps-$3_mS-$4_mD-$5_G-$6_B-$9_P-$(($7 + $8))_%j.txt sbatchTMPRecursion $SLURM_JOBID $2 $3 $4 $5 $6 $(($7 + $8 - 1)) $8 $9 ${10};
 } || {
    echo "Missing configuration file (previous job failed) or actual job failed at any step. Stopping recursion.";
 }
