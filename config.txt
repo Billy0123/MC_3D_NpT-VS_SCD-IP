@@ -25,7 +25,7 @@ intervalResults		=10;		//liczba cykli, co ktora zapisywane sa mierzone wielkosci
 maxDeltaR		=0.15;		//najwieksza wartosc ruchu probnego czastki
 desiredAcceptanceRatioR	=0.3;		//wartosc akceptacji ruchow probnych czastek
 desiredAcceptanceRatioV	=0.2;		//wartosc akceptacji ruchow probnych pudla
-useFileToIterate	=0;		//0-stosuj PONIZSZE ustawienia, 1-korzystaj z pliku 'startArguments.txt' do iterowania (plik ustawiony DOMYSLNIE na growing=1, max 1000 iteracji)
+useFileToIterate	=0;		//0-stosuj PONIZSZE ustawienia, 1-korzystaj z pliku 'startArguments.txt' do iterowania (plik ustawiony DOMYSLNIE na growing=1, max 1000 iteracji; UWAGA-kolumny: pierwsza:pacFrac[dowolna], druga:pressure[.3])
 startMinPacFrac		=1.4800;	//wartosc pacFrac, (startowe V przy growing=1)
 startMaxPacFrac		=1.0010;	//wartosc pacFrac, (startowe V przy growing=0)
 minArg			=2.4690;	//najmniejsze badane cisnienie (startArg przy growing=1)
