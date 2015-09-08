@@ -956,26 +956,28 @@ int main(int argumentsNumber, char **arguments) {
             printf("Skipping first iteration...\n");
             skipFirstIteration=0;
         } else {
-            if (loadedConfiguration) {
-                if (loadedSetStartGenerator) {
-                    printf("Setting start position of p-random number generator to position from file...\n");
-                    InitMT((unsigned int)arg1);
-                    randomStartStep[0]=arg1;
+            if (!onlyMath[0]) {
+                if (loadedConfiguration) {
+                    if (loadedSetStartGenerator) {
+                        printf("Setting start position of p-random number generator to position from file...\n");
+                        InitMT((unsigned int)arg1);
+                        randomStartStep[0]=arg1;
+                    } else {
+                        randomStartStep[0]=InitRandomMT();
+                        printf("Setting start position of p-random number generator to position from file - DISABLED\n");
+                    }
+                    randomStartStep[1]=0;
+                    if (loadedSetGenerator) {
+                        printf("Setting p-random number generator to last position from file...\n");
+                        for (double i=0;i<arg2;i++) MTGenerate(randomStartStep);
+                    } else printf("Setting p-random number generator to last position from file - DISABLED\n");
                 } else {
+                    printf("Setting start position of p-random number generator to actual CPU time...\n");
                     randomStartStep[0]=InitRandomMT();
-                    printf("Setting start position of p-random number generator to position from file - DISABLED\n");
+                    randomStartStep[1]=0;
                 }
-                randomStartStep[1]=0;
-                if (loadedSetGenerator) {
-                    printf("Setting p-random number generator to last position from file...\n");
-                    for (double i=0;i<arg2;i++) MTGenerate(randomStartStep);
-                } else printf("Setting p-random number generator to last position from file - DISABLED\n");
-            } else {
-                printf("Setting start position of p-random number generator to actual CPU time...\n");
-                randomStartStep[0]=InitRandomMT();
-                randomStartStep[1]=0;
-            }
-            printf("Start of equilibration at reduced pressure: %.4f (startDen: %.4f, startPacFrac: %.4f)... (%ld cycles)\n",pressureReduced,rho,pacFrac,cyclesOfEquilibration);
+                printf("Start of equilibration at reduced pressure: %.4f (startDen: %.4f, startPacFrac: %.4f)... (%ld cycles)\n",pressureReduced,rho,pacFrac,cyclesOfEquilibration);
+            } else printf("Start of mathOnly mode for: N: %d, gaps: %d, growing: %d, StartPressRed: %.4f (StartDen: %.4f, startPacFrac: %.4f), mN: %d, mS: %.2f, mD: %.6f\n",N,gaps,growing,startArg,rho,pacFrac,multimerN,multimerS,multimerD);
 
 
 

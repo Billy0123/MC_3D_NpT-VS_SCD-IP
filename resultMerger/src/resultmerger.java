@@ -12,7 +12,7 @@ public class resultmerger {
         return "2D_N-"+N+"_gaps-"+gaps+"_G-"+G+"_badanie-"+badanieNumber+"_mN-"+mN+"_mS-"+mS+"_mD-"+mD;
     }
     
-    public resultmerger (String newDirectoryName, String N, String gaps, String G, String mN, String mS, String mD, String badanieStart, String badanieEnd) {
+    public resultmerger (String newDirectoryName, String N, String gaps, String G, String mN, String mS, String mD, String badanieStart, String badanieEnd, int liczbaDanych) {
         this.newDirectoryName=newDirectoryName;
         this.N=N;
         this.gaps=gaps;
@@ -37,7 +37,7 @@ public class resultmerger {
                         String buffer; while ((buffer=czytnik.readLine())!=null) {
                             try {
                                 String[] dataS = buffer.split("\t");
-                                for (int k=0;k<6;k++) Double.parseDouble(dataS[k]);
+                                for (int k=0;k<=liczbaDanych;k++) Double.parseDouble(dataS[k]);
                                 zapis.write(buffer); zapis.newLine();
                             } catch (Exception e3) {System.out.println("Bad line found - fixed in: "+actualDirectory.getAbsolutePath()+"/"+actualDirectory.list()[j]);}
                         }
@@ -105,6 +105,6 @@ public class resultmerger {
     }
 
     public static void main(String[] args) {
-        new resultmerger(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8]);
+        new resultmerger(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],Integer.parseInt(args[9]));
     }
 }
