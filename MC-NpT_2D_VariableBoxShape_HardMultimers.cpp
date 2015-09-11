@@ -149,48 +149,79 @@ int checkOverlaps (double dr, double aAngle, double bAngle) {
     return overlap;
 }
 
-double minimalDistanceForEvenHCM (int indeksPowierzchni, double aAngle, double bAngle) {
-    double a[4]={C,-C,C,-C}, b[4]={-C,-C,C,C};
+double minimalDistanceAnalyticalMethodHCM (int indeksPowierzchni, double aAngle, double bAngle, double a[4], double b[4]) {
     double angleA=aAngle+a[indeksPowierzchni],angleB=bAngle+b[indeksPowierzchni],
            buffer=sin(angleA)+sin(angleB);
     return (ROkreguOpisanego*(cos(angleA)+cos(angleB))+sqrt(multimerD*multimerD-ROkreguOpisanego*ROkreguOpisanego*buffer*buffer));
 }
 
 double getMinimalDistanceAnalyticalMethodForEvenHCM (double aAngle, double bAngle) {
+    double a[4]={C,-C,C,-C}, b[4]={-C,-C,C,C};
     if (aAngle<-absoluteMinimum) {
         double ARCSIN=asin(sin(aAngle+C)*L/(L*cos(C)+sqrt(4.0-L*L)*sin(C))),
                intersectionCurve13=-ARCSIN;
-        if (bAngle>intersectionCurve13) return minimalDistanceForEvenHCM(0,aAngle,bAngle);
-        else return minimalDistanceForEvenHCM(2,aAngle,bAngle);
+        if (bAngle>intersectionCurve13) return minimalDistanceAnalyticalMethodHCM(0,aAngle,bAngle,a,b);
+        else return minimalDistanceAnalyticalMethodHCM(2,aAngle,bAngle,a,b);
     } else if (aAngle<0) {
         double ARCSIN=asin(sin(aAngle)/L*(L*cos(C)+sqrt(4.0-L*L)*sin(C))),
                intersectionCurve14=aAngle,
                intersectionCurve34=-C-ARCSIN;
-        if (bAngle>intersectionCurve14) return minimalDistanceForEvenHCM(0,aAngle,bAngle);
-        else if (bAngle>intersectionCurve34) return minimalDistanceForEvenHCM(3,aAngle,bAngle);
-        else return minimalDistanceForEvenHCM(2,aAngle,bAngle);
+        if (bAngle>intersectionCurve14) return minimalDistanceAnalyticalMethodHCM(0,aAngle,bAngle,a,b);
+        else if (bAngle>intersectionCurve34) return minimalDistanceAnalyticalMethodHCM(3,aAngle,bAngle,a,b);
+        else return minimalDistanceAnalyticalMethodHCM(2,aAngle,bAngle,a,b);
     } else if (aAngle<absoluteMinimum) {
         double ARCSIN=asin(sin(aAngle)/L*(L*cos(C)+sqrt(4.0-L*L)*sin(C))),
                intersectionCurve14=aAngle,
                intersectionCurve12=C-ARCSIN;
-        if (bAngle>intersectionCurve12) return minimalDistanceForEvenHCM(1,aAngle,bAngle);
-        else if (bAngle>intersectionCurve14) return minimalDistanceForEvenHCM(0,aAngle,bAngle);
-        else return minimalDistanceForEvenHCM(3,aAngle,bAngle);
+        if (bAngle>intersectionCurve12) return minimalDistanceAnalyticalMethodHCM(1,aAngle,bAngle,a,b);
+        else if (bAngle>intersectionCurve14) return minimalDistanceAnalyticalMethodHCM(0,aAngle,bAngle,a,b);
+        else return minimalDistanceAnalyticalMethodHCM(3,aAngle,bAngle,a,b);
     } else {
         double ARCSIN=asin(sin(aAngle-C)*L/(L*cos(C)+sqrt(4.0-L*L)*sin(C))),
                intersectionCurve24=-ARCSIN;
-        if (bAngle>intersectionCurve24) return minimalDistanceForEvenHCM(1,aAngle,bAngle);
-        else return minimalDistanceForEvenHCM(3,aAngle,bAngle);
+        if (bAngle>intersectionCurve24) return minimalDistanceAnalyticalMethodHCM(1,aAngle,bAngle,a,b);
+        else return minimalDistanceAnalyticalMethodHCM(3,aAngle,bAngle,a,b);
     }
 }
 
-int checkOverlapsAnalyticalMethodForEvenHCM (double dr, double aAngle, double bAngle) {
+double getMinimalDistanceAnalyticalMethodForOddHCM (double aAngle, double bAngle) {
+    double a[4]={C,-C,C,-C}, b[4]={-2*C,0,0,2*C};
+    if (aAngle<-absoluteMinimum) {
+        double ARCSIN = asin(sin(aAngle+C)*L/(L*cos(C)+sqrt(4.0-L*L)*sin(C))),
+               intersectionCurve13 = C-ARCSIN;
+        if (bAngle>intersectionCurve13) return minimalDistanceAnalyticalMethodHCM(0,aAngle,bAngle,a,b);
+        else return minimalDistanceAnalyticalMethodHCM(2,aAngle,bAngle,a,b);
+    } else if (aAngle<0) {
+        double ARCSIN = asin(sin(aAngle)/L*(L*cos(C)+sqrt(4.0-L*L)*sin(C))),
+               intersectionCurve12 = aAngle+C,
+               intersectionCurve23 = -ARCSIN;
+        if (bAngle>intersectionCurve12) return minimalDistanceAnalyticalMethodHCM(0,aAngle,bAngle,a,b);
+        else if (bAngle>intersectionCurve23) return minimalDistanceAnalyticalMethodHCM(1,aAngle,bAngle,a,b);
+        else return minimalDistanceAnalyticalMethodHCM(2,aAngle,bAngle,a,b);
+    } else if (aAngle<absoluteMinimum) {
+        double ARCSIN = asin(sin(aAngle)/L*(L*cos(C)+sqrt(4.0-L*L)*sin(C))),
+               intersectionCurve23 = -ARCSIN,
+               intersectionCurve34 = aAngle-C;
+        if (bAngle>intersectionCurve23) return minimalDistanceAnalyticalMethodHCM(1,aAngle,bAngle,a,b);
+        else if (bAngle>intersectionCurve34) return minimalDistanceAnalyticalMethodHCM(2,aAngle,bAngle,a,b);
+        else return minimalDistanceAnalyticalMethodHCM(3,aAngle,bAngle,a,b);
+    } else {
+        double ARCSIN = asin(sin(aAngle-C)*L/(L*cos(C)+sqrt(4.0-L*L)*sin(C))),
+               intersectionCurve24 = -C-ARCSIN;
+        if (bAngle>intersectionCurve24) return minimalDistanceAnalyticalMethodHCM(1,aAngle,bAngle,a,b);
+        else return minimalDistanceAnalyticalMethodHCM(3,aAngle,bAngle,a,b);
+    }
+}
+
+int checkOverlapsAnalyticalMethodHCM (double dr, double aAngle, double bAngle) {
     int overlap=0;
 
     aAngle=normalizeAngle(aAngle+C);
     bAngle=normalizeAngle(bAngle+C);
 
-    if (dr<getMinimalDistanceAnalyticalMethodForEvenHCM(aAngle,bAngle)) overlap=1;
+    if (multimerN%2==0) {
+        if (dr<getMinimalDistanceAnalyticalMethodForEvenHCM(aAngle,bAngle)) overlap=1;
+    } else if (dr<getMinimalDistanceAnalyticalMethodForOddHCM(aAngle,bAngle)) overlap=1;
     return overlap;
 }
 
@@ -252,29 +283,20 @@ int createRandomGaps (particle *particles, double boxMatrix[2][2]) {
     }
 }
 
-int initPositions (particle *particles, double boxMatrix[2][2]) {//dziala dla heksamerow (dla penta juz nie)
-    double modX, modY;
-    switch (N) {
-        case 56:{modX=7.0;modY=8.0;}break;
-        case 224:{modX=14.0;modY=16.0;}break;
-        case 504:{modX=21.0;modY=24.0;}break;
-        case 780:{modX=26.0;modY=30.0;}break;
-        case 896:{modX=28.0;modY=32.0;}break;
-        case 3120:{modX=52.0;modY=60.0;}break;
-    }
-    double xInterval=boxMatrix[0][0]/modX, yInterval=boxMatrix[1][1]/modY,
-           xPosition=0, yPosition=0;
-    int licznik=1;
+int initPositions (particle *particles, double boxMatrix[2][2], double matrixOfParticlesSize[2], double rowShift, double initPeriodicImageMinDistance, double startAngleInRows[2]) {
+    double mod=sqrt(N/matrixOfParticlesSize[0]/matrixOfParticlesSize[1]), interval[2], actualPosition[2]={0,0};
+    for (int i=0;i<2;i++) interval[i]=boxMatrix[i][i]/matrixOfParticlesSize[i]/mod;
+    int rowCounter=0;
     for (int i=0;i<N;i++) {
-        particles[i].r[0]=xPosition; particles[i].r[1]=yPosition;
+        for (int j=0;j<2;j++) particles[i].r[j]=actualPosition[j];
         particles[i].normR[0]=(-boxMatrix[1][1]*particles[i].r[0]+boxMatrix[1][0]*particles[i].r[1])/normalizingDenominator;
         particles[i].normR[1]=(boxMatrix[1][0]*particles[i].r[0]-boxMatrix[0][0]*particles[i].r[1])/normalizingDenominator;
-        xPosition+=xInterval;
-        if (xPosition+minDistance/2.0>boxMatrix[0][0]) {
-            xPosition=(licznik++%2)*xInterval/2.0;
-            yPosition+=yInterval;
+        particles[i].phi=startAngleInRows[rowCounter%2];
+        actualPosition[0]+=interval[0];
+        if ((rowCounter%2)*rowShift-actualPosition[0]+boxMatrix[0][0]<initPeriodicImageMinDistance) {  //sprawdzenie czy kolejna wstawiona cząstka nie przekryje swojego obrazu periodycznego
+            actualPosition[0]=(++rowCounter%2)*rowShift;
+            actualPosition[1]+=interval[1];
         }
-        particles[i].phi=absoluteMinimum2;
     }
     if (gaps>0) return createRandomGaps(particles,boxMatrix);
     else return 1;
@@ -401,7 +423,7 @@ int getEnergy (particle *particles, int index, double boxMatrix[2][2]) {
                 }
                 aAngle=normalizeAngle(aAngle); bAngle=normalizeAngle(bAngle); //analyticMethodForEvenHCM 2/6
                 energy=checkOverlaps(dr,aAngle,bAngle);
-                //energy=checkOverlapsAnalyticalMethodForEvenHCM(dr,aAngle,bAngle);
+                //energy=checkOverlapsAnalyticalMethodHCM(dr,aAngle,bAngle);
             } //analyticMethodForEvenHCM 3/6
             if (energy==1) i=particles[index].neighCounter;
         }
@@ -533,7 +555,7 @@ int attemptToChangeVolume (particle *particles, double pressure, double boxMatri
                     }
                     aAngle=normalizeAngle(aAngle); bAngle=normalizeAngle(bAngle); //analyticMethodForEvenHCM 5/6
                     energy=checkOverlaps(dr,aAngle,bAngle);
-                    //energy=checkOverlapsAnalyticalMethodForEvenHCM(dr,aAngle,bAngle);
+                    //energy=checkOverlapsAnalyticalMethodHCM(dr,aAngle,bAngle);
                 } //analyticMethodForEvenHCM 6/6
                 if (energy==1) {
                     result=0;
@@ -814,6 +836,15 @@ int main(int argumentsNumber, char **arguments) {
     if (loadedConfiguration && loadType) loadedArg=startArg;
     activeN=N-gaps;
 
+    //sprawdzenie czy uzyskana konfiguracja jest obsługiwana
+    if (multimerN!=6 && multimerN!=5) {
+        printf("ERROR: Not supported multimerN: %d.\n",multimerN);
+        return 0;
+    }
+    if (N%56!=0 && N%780!=0) {
+        printf("ERROR: Not supported N: %d.\n",N);
+        return 0;
+    }
 
     //stale wynikajace z zadanych parametrow multimerow
     L=multimerS/multimerD;
@@ -821,10 +852,12 @@ int main(int argumentsNumber, char **arguments) {
     ROkreguOpisanego=multimerS/(2.0*sin(C));
     absoluteMinimum=atan(L/(2.0*L/tan(C)+sqrt(4.0-L*L)));
     absoluteMinimum2=C-absoluteMinimum;
-    minDistance=getMinimalDistanceAnalyticalMethodForEvenHCM(absoluteMinimum,absoluteMinimum); //tylko dla parzystych HCM
+    if (multimerN%2==0) minDistance=getMinimalDistanceAnalyticalMethodForEvenHCM(absoluteMinimum,absoluteMinimum);
+    else minDistance=getMinimalDistanceAnalyticalMethodForOddHCM(absoluteMinimum,absoluteMinimum-C);
     maxDistance=ROkreguOpisanego*2+multimerD;
     neighRadius=1.4*/*dla 0.51 i fazy chiralnej 1.3 powinno wystarczyc*1.3*/maxDistance; neighRadius2=neighRadius*neighRadius; neighSafeDistance=neighRadius-maxDistance;
-    VcpPerParticle=minDistance*minDistance*sqrt(3)/2.0;  //przynajmniej dla heksamerow
+    if (multimerN==6) VcpPerParticle=minDistance*minDistance*sqrt(3)/2.0;  //dla heksamerow o dowolnym d/\sigma
+    else if (multimerN==5) VcpPerParticle=5.0936*multimerD*multimerD;  //dla pentamerów o d/\sigma=1
     //nazwy folderow na podstawie parametrow programu
     sprintf(bufferG,"%d",growing); sprintf(bufferN,"%d",N); sprintf(bufferGaps,"%d",gaps);
     sprintf(bufferMN,"%d",multimerN); sprintf(bufferMS,"%.2f",multimerS); sprintf(bufferMD,"%.6f",multimerD);
@@ -875,17 +908,21 @@ int main(int argumentsNumber, char **arguments) {
     while (growing>=0) {
         double pressureReduced=arg, pressureReal=pressureReduced/multimerS/multimerS, //pressureReduced=\tau*\sigma^2/(kT), kT=1
                volume=(startArg==arg)?(growing?N/(1.0/VcpPerParticle/startMinPacFrac):N/(1.0/VcpPerParticle/startMaxPacFrac)):oldVolume, rho=N/volume, pacFrac=1.0/VcpPerParticle/rho,
-               boxMatrix[2][2],boxSizeCoefficient;
+               boxMatrix[2][2],unitCellAtCP[2],initRowShift,initPeriodicImageMinDistance,startAngleInRows[2],matrixOfParticlesSize[2];
+        if (multimerN==6) {
+            unitCellAtCP[0]=minDistance; unitCellAtCP[1]=sqrt(3)/2.0*minDistance;
+            initRowShift=unitCellAtCP[0]*sqrt(pacFrac)/2.0; initPeriodicImageMinDistance=minDistance;
+            startAngleInRows[0]=absoluteMinimum2; startAngleInRows[1]=absoluteMinimum2;
+        } else if (multimerN==5) {
+            unitCellAtCP[0]=2.40487*multimerD; unitCellAtCP[1]=2.11804*multimerD;
+            initRowShift=1.39176*multimerD; initPeriodicImageMinDistance=getMinimalDistanceAnalyticalMethodForOddHCM(0,0);
+            startAngleInRows[0]=0; startAngleInRows[1]=C;
+        }
+        if (N%56==0) {matrixOfParticlesSize[0]=7; matrixOfParticlesSize[1]=8;}
+        else if (N%780==0) {matrixOfParticlesSize[0]=26; matrixOfParticlesSize[1]=30;}
+        double NLinearMod = sqrt(N/matrixOfParticlesSize[0]/matrixOfParticlesSize[1]);
         if (startArg==arg) {
-            if (N==56 || N==224 || N==504 || N==896) {
-                boxSizeCoefficient=sqrt(volume/(28*sqrt(3)));
-                boxMatrix[0][0]=7*boxSizeCoefficient;
-                boxMatrix[1][1]=8*sqrt(3/4.0)*boxSizeCoefficient;
-            } else if (N==780 || N==3120) {
-                boxSizeCoefficient=sqrt(volume/(97.5*sqrt(3)));
-                boxMatrix[0][0]=13*boxSizeCoefficient;
-                boxMatrix[1][1]=15*sqrt(3/4.0)*boxSizeCoefficient;
-            }
+            for (int i=0;i<2;i++) boxMatrix[i][i]=matrixOfParticlesSize[i]*unitCellAtCP[i]*sqrt(pacFrac)*NLinearMod;
             boxMatrix[1][0]=0.0; boxMatrix[0][1]=0.0;
         } else for (int i=0;i<2;i++) for (int j=0;j<2;j++) boxMatrix[i][j]=oldBoxMatrix[i][j];
         normalizingDenominator=pow(boxMatrix[1][0],2)-boxMatrix[0][0]*boxMatrix[1][1];
@@ -893,7 +930,7 @@ int main(int argumentsNumber, char **arguments) {
         if (!onlyMath[0]) {
             if (arg==startArg && !loadedConfiguration) {
                 printf("INIT POS.- N: %d, gaps: %d, growing: %d, StartPressRed: %.4f (StartDen: %.4f, startPacFrac: %.4f), mN: %d, mS: %.2f, mD: %.6f\n",N,gaps,growing,startArg,rho,pacFrac,multimerN,multimerS,multimerD);
-                if (!initPositions(particles,boxMatrix)) return 0;
+                if (!initPositions(particles,boxMatrix,matrixOfParticlesSize,initRowShift,initPeriodicImageMinDistance,startAngleInRows)) return 0;
                 adjustAngles(particles,boxMatrix);
                 updateNeighbourList(particles,boxMatrix); //matrix(comment) 12/16
             } else if (loadedConfiguration) {
@@ -991,7 +1028,7 @@ int main(int argumentsNumber, char **arguments) {
                 attemptedNumberV=0, displacedNumberV=0;
             double nStep=fullCycle*((double)cyclesOfEquilibration+(double)cyclesOfMeasurement+10.0),
                    possibleDistance=0; //matrix(comment) 14/16
-            int volumeMove=0, cycleCounter=0, indexScanned=N==56?25:(N==224?105:(N==504?242:(N==780?377:(N==896?434:1534))));
+            int volumeMove=0, cycleCounter=0, indexScanned=(matrixOfParticlesSize[0]*round(matrixOfParticlesSize[1]*NLinearMod/2.0)-round(matrixOfParticlesSize[0]/2.0))*NLinearMod;
             //assignParticlesToCells(particles,boxMatrix); //matrix 15/16
 
             char allResultsFileName[200],bufferConfigurations[200],bufferOrientations[200],allOrientationsFileName[200],bufferOrientationsResults[200],allOrientationsResultsFileName[200],bufferPressure[100];
@@ -1094,7 +1131,7 @@ int main(int argumentsNumber, char **arguments) {
                                             }
                                             aAngle=normalizeAngle(aAngle); bAngle=normalizeAngle(bAngle);
                                             energy=checkOverlaps(dr,aAngle,bAngle);
-                                            //energy=checkOverlapsAnalyticalMethodForEvenHCM(dr,aAngle,bAngle);
+                                            //energy=checkOverlapsAnalyticalMethodHCM(dr,aAngle,bAngle);
                                             if (energy==1) printf("colliding: distance- %.12f, alpha: %.12f, beta: %.12f, analytic: %.12f, i: %d, j: %d\n",dr,aAngle,bAngle,getMinimalDistanceAnalyticalMethodForEvenHCM(normalizeAngle(aAngle+C),normalizeAngle(bAngle+C)),i,j);
                                         }
                                         if (energy==1) collidingPairs++;
@@ -1137,7 +1174,7 @@ int main(int argumentsNumber, char **arguments) {
                                             }
                                             aAngle=normalizeAngle(aAngle); bAngle=normalizeAngle(bAngle);  //analyticCheck 2/3
                                             energy=checkOverlaps(dr,aAngle,bAngle);
-                                            //energy=checkOverlapsAnalyticalMethodForEvenHCM(dr,aAngle,bAngle);
+                                            //energy=checkOverlapsAnalyticalMethodHCM(dr,aAngle,bAngle);
                                         }  //analyticCheck 3/3
                                         if (energy==1) collidingPairs++;
                                     }
