@@ -8,7 +8,7 @@
 
 #UWAGA #1 !!! Pamietac o wyzerowaniu liczby krokow generatora liczb pseudolosowych (by niepotrzebnie nie czekac na to przy kazdym runie -> OPCJA W CONFIGU)
 
-#$1-job_id jobu, ktory zawieral loadowany punkt, $2-N, $3-gaps, $4-multimerS, $5-multimerD, $6-growing, $7-pointNumber(from 0), $8-useSpecificDirectory (UWAGA: NIE 0), $9-ile razy powtorzyc wykonanie jobu?
+#$1-job_id jobu, ktory zawieral loadowany punkt, $2-N, $3-gaps, $4-multimerS, $5-multimerD, $6-growing, $7-pointNumber(from 0), $8-useSpecificDirectory (UWAGA: NIE 0), $9-ile razy powtorzyc wykonanie jobu?, $10-filterText
 
 
 cd $SLURM_SUBMIT_DIR
@@ -42,7 +42,7 @@ cp $SLURM_SUBMIT_DIR/2D_N-$2_gaps-$3_G-$6_badanie-$8_mN-6_mS-$4_mD-$5/j-$1_Confi
 
    if [ $(($9 - 1)) -gt 0 ]; then 
    cd $SLURM_SUBMIT_DIR
-   sbatch --job-name=G$6B$8P$7R$(($9 - 1)) --output=output/OUT_HCH$2_gaps-$3_mS-$4_mD-$5_G-$6_B-$8_P-$7_R-$(($9 - 1))_%j.txt --error=output/ERR_HCH$2_gaps-$3_mS-$4_mD-$5_G-$6_B-$8_P-$7_R-$(($9 - 1))_%j.txt sbatchTMPRecursionOnePoint $SLURM_JOBID $2 $3 $4 $5 $6 $7 $8 $(($9 - 1));
+   sbatch --job-name=${10}G$6B$8P$7R$(($9 - 1)) --output=output/OUT_HCH$2_gaps-$3_mS-$4_mD-$5_G-$6_B-$8_P-$7_R-$(($9 - 1))_%j.txt --error=output/ERR_HCH$2_gaps-$3_mS-$4_mD-$5_G-$6_B-$8_P-$7_R-$(($9 - 1))_%j.txt sbatchTMPRecursionOnePoint $SLURM_JOBID $2 $3 $4 $5 $6 $7 $8 $(($9 - 1)) ${10};
    fi
 } || {
    echo "Missing configuration file (previous job failed) or actual job failed at any step. Stopping recursion.";

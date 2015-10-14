@@ -5,7 +5,7 @@
 #PBS -l walltime=0:5:0
 #standardowy output i error zlecane z poziomu wywołania qsuba - bo tutaj nie działają operacje typu $(())
 
-#$VAR1-job_id jobu, ktory zawieral loadowany punkt, $VAR2-N, $VAR3-gaps, $VAR4-multimerS, $VAR5-multimerD, $VAR6-growing, $VAR7-pointNumber(from 0), $VAR8-iterationsNumber, $VAR9-useSpecificDirectory (UWAGA: NIE 0), $VAR10-MAX(+1)PointNumber(from 0)
+#$VAR1-job_id jobu, ktory zawieral loadowany punkt, $VAR2-N, $VAR3-gaps, $VAR4-multimerS, $VAR5-multimerD, $VAR6-growing, $VAR7-pointNumber(from 0), $VAR8-iterationsNumber, $VAR9-useSpecificDirectory (UWAGA: NIE 0), $VAR10-MAX(+1)PointNumber(from 0), filterText-filterText
 
 cd $PBS_O_WORKDIR
 #pressure do 3 miejsc po przecinku (zeby pasowalo do nazw plikow, lista DOMYSLNIE na G=1)
@@ -35,7 +35,7 @@ cp $PBS_O_WORKDIR/2D_N-${VAR2}_gaps-${VAR3}_G-${VAR6}_badanie-${VAR9}_mN-6_mS-${
    #UWAGA #3: PBS kasuje po sobie tempa automatycznie
 
    if [ $(($VAR7 + $VAR8 + 1)) -lt $VAR10 ]; then 
-   ssh ce.reef.man.poznan.pl "cd $PBS_O_WORKDIR; qsub -N G${VAR6}B${VAR9}P$(($VAR7 + $VAR8 + 1)) -o output/OUT_HCH${VAR2}_gaps-${VAR3}_mS-${VAR4}_mD-${VAR5}_G-${VAR6}_B-${VAR9}_P-$(($VAR7 + $VAR8 + 1))_prevJobID-${PBS_JOBID}.txt -e output/ERR_HCH${VAR2}_gaps-${VAR3}_mS-${VAR4}_mD-${VAR5}_G-${VAR6}_B-${VAR9}_P-$(($VAR7 + $VAR8 + 1))_prevJobID-${PBS_JOBID}.txt -v VAR1=$PBS_JOBID,VAR2=$VAR2,VAR3=$VAR3,VAR4=$VAR4,VAR5=$VAR5,VAR6=$VAR6,VAR7=$(($VAR7 + $VAR8)),VAR8=$VAR8,VAR9=$VAR9,VAR10=$VAR10 qsubTMPRecursion";
+   ssh ce.reef.man.poznan.pl "cd $PBS_O_WORKDIR; qsub -N ${filterText}G${VAR6}B${VAR9}P$(($VAR7 + $VAR8 + 1)) -o output/OUT_HCH${VAR2}_gaps-${VAR3}_mS-${VAR4}_mD-${VAR5}_G-${VAR6}_B-${VAR9}_P-$(($VAR7 + $VAR8 + 1))_prevJobID-${PBS_JOBID}.txt -e output/ERR_HCH${VAR2}_gaps-${VAR3}_mS-${VAR4}_mD-${VAR5}_G-${VAR6}_B-${VAR9}_P-$(($VAR7 + $VAR8 + 1))_prevJobID-${PBS_JOBID}.txt -v VAR1=$PBS_JOBID,VAR2=$VAR2,VAR3=$VAR3,VAR4=$VAR4,VAR5=$VAR5,VAR6=$VAR6,VAR7=$(($VAR7 + $VAR8)),VAR8=$VAR8,VAR9=$VAR9,VAR10=$VAR10,filterText=${filterText} qsubTMPRecursion";
    #ui.inula.man.poznan.pl
    fi
 } || {

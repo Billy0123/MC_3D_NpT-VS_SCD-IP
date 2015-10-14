@@ -6,7 +6,7 @@
 #SBATCH --output=output/OUT_HCH3120_100_%j.txt
 #SBATCH --error=output/ERR_HCH3120_100_%j.txt
 
-#$1-N, $2-gaps, $3-multimerS, $4-multimerD, $5-growing, $6-iterationsNumber, $7-useSpecificDirectory (UWAGA: NIE 0), $8-MAX(+1)PointNumber(from 0), $9-pointNumber(from 0)
+#$1-N, $2-gaps, $3-multimerS, $4-multimerD, $5-growing, $6-iterationsNumber, $7-useSpecificDirectory (UWAGA: NIE 0), $8-MAX(+1)PointNumber(from 0), $9-pointNumber(from 0), $10-filterText
 
 
 #UWAGA #1: SLURM nie tworzy indywidualnego folderu dla kazdego zadania (ponizej tworzony jest recznie)
@@ -27,5 +27,5 @@ cp -r 2D_N-$1_gaps-$2_G-$5_badanie-$7_mN-6_mS-$3_mD-$4 $SLURM_SUBMIT_DIR
 rm -r $TMPDIR/tmp_mb1991_$SLURM_JOB_ID
 
 cd $SLURM_SUBMIT_DIR
-sbatch --job-name=G$5B$7P$(($9 + $6)) --output=output/OUT_HCH$1_gaps-$2_mS-$3_mD-$4_G-$5_B-$7_P-$(($9 + $6))_%j.txt --error=output/ERR_HCH$1_gaps-$2_mS-$3_mD-$4_G-$5_B-$7_P-$(($9 + $6))_%j.txt sbatchTMPRecursion $SLURM_JOBID $1 $2 $3 $4 $5 $(($9 + $6 - 1)) $6 $7 $8;
+sbatch --job-name=${10}G$5B$7P$(($9 + $6)) --output=output/OUT_HCH$1_gaps-$2_mS-$3_mD-$4_G-$5_B-$7_P-$(($9 + $6))_%j.txt --error=output/ERR_HCH$1_gaps-$2_mS-$3_mD-$4_G-$5_B-$7_P-$(($9 + $6))_%j.txt sbatchTMPRecursion $SLURM_JOBID $1 $2 $3 $4 $5 $(($9 + $6 - 1)) $6 $7 $8 ${10};
 exit 0

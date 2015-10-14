@@ -8,7 +8,7 @@
 
 #UWAGA #1 !!! Pamietac o wyzerowaniu liczby krokow generatora liczb pseudolosowych (by niepotrzebnie nie czekac na to przy kazdym runie -> OPCJA W CONFIGU)
 
-#$VAR1-job_id jobu, ktory zawieral loadowany punkt, $VAR2-N, $VAR3-gaps, $VAR4-multimerS, $VAR5-multimerD, $VAR6-growing, $VAR7-pointNumber(from 0), $VAR8-useSpecificDirectory (UWAGA: NIE 0), $VAR9-ile razy powtorzyc wykonanie jobu?
+#$VAR1-job_id jobu, ktory zawieral loadowany punkt, $VAR2-N, $VAR3-gaps, $VAR4-multimerS, $VAR5-multimerD, $VAR6-growing, $VAR7-pointNumber(from 0), $VAR8-useSpecificDirectory (UWAGA: NIE 0), $VAR9-ile razy powtorzyc wykonanie jobu?, filterText-filterText
 
 
 cd $PBS_O_WORKDIR
@@ -39,7 +39,7 @@ cp $PBS_O_WORKDIR/2D_N-${VAR2}_gaps-${VAR3}_G-${VAR6}_badanie-${VAR8}_mN-6_mS-${
    #UWAGA #4: PBS kasuje po sobie tempa automatycznie
 
    if [ $(($VAR9 - 1)) -gt 0 ]; then 
-   ssh ce.reef.man.poznan.pl "cd $PBS_O_WORKDIR; qsub -N G${VAR6}B${VAR8}P${VAR7}R$(($VAR9 - 1)) -v VAR1=$PBS_JOBID,VAR2=$VAR2,VAR3=$VAR3,VAR4=$VAR4,VAR5=$VAR5,VAR6=$VAR6,VAR7=$VAR7,VAR8=$VAR8,VAR9=$(($VAR9 - 1)) qsubTMPRecursionOnePoint";
+   ssh ce.reef.man.poznan.pl "cd $PBS_O_WORKDIR; qsub -N ${filterText}G${VAR6}B${VAR8}P${VAR7}R$(($VAR9 - 1)) -v VAR1=$PBS_JOBID,VAR2=$VAR2,VAR3=$VAR3,VAR4=$VAR4,VAR5=$VAR5,VAR6=$VAR6,VAR7=$VAR7,VAR8=$VAR8,VAR9=$(($VAR9 - 1)),filterText=${filterText} qsubTMPRecursionOnePoint";
    #ui.inula.man.poznan.pl
    fi
 } || {
