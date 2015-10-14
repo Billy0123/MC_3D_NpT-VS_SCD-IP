@@ -855,7 +855,7 @@ int main(int argumentsNumber, char **arguments) {
     if (multimerN%2==0) minDistance=getMinimalDistanceAnalyticalMethodForEvenHCM(absoluteMinimum,absoluteMinimum);
     else minDistance=getMinimalDistanceAnalyticalMethodForOddHCM(absoluteMinimum,absoluteMinimum-C);
     maxDistance=ROkreguOpisanego*2+multimerD;
-    neighRadius=1.4*/*dla 0.51 i fazy chiralnej 1.3 powinno wystarczyc*1.3*/maxDistance; neighRadius2=neighRadius*neighRadius; neighSafeDistance=neighRadius-maxDistance;
+    neighRadius=1.5*/*dla 0.51 i fazy chiralnej 1.3 powinno wystarczyc*1.3*/maxDistance; neighRadius2=neighRadius*neighRadius; neighSafeDistance=neighRadius-maxDistance;
     if (multimerN==6) VcpPerParticle=minDistance*minDistance*sqrt(3)/2.0;  //dla heksamerow o dowolnym d/\sigma
     else if (multimerN==5) VcpPerParticle=5.0936*multimerD*multimerD;  //dla pentamerów o d/\sigma=1
     //nazwy folderow na podstawie parametrow programu
