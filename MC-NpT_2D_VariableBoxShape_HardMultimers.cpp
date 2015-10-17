@@ -1014,7 +1014,7 @@ int main(int argumentsNumber, char **arguments) {
                     randomStartStep[1]=0;
                 }
                 printf("Start of equilibration at reduced pressure: %.4f (startDen: %.4f, startPacFrac: %.4f)... (%ld cycles)\n",pressureReduced,rho,pacFrac,cyclesOfEquilibration);
-            } else printf("Start of mathOnly mode for: N: %d, gaps: %d, growing: %d, StartPressRed: %.4f (StartDen: %.4f, startPacFrac: %.4f), mN: %d, mS: %.2f, mD: %.6f\n",N,gaps,growing,startArg,rho,pacFrac,multimerN,multimerS,multimerD);
+            } else printf("Start of mathOnly mode for: N: %d, gaps: %d, growing: %d, pressRed: %.4f, mN: %d, mS: %.2f, mD: %.6f\n",N,gaps,growing,pressureReduced,multimerN,multimerS,multimerD);
 
 
 
