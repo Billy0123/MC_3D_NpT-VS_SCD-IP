@@ -9,16 +9,16 @@
 #include "MTGenerator.h"
 
 int N,gaps,activeN,loadedConfiguration,loadType=0,loadedSetStartGenerator,loadedSetGenerator,iterationsNumber,
-    growing,multimerN,countCollidingPairs,ODFLength,skipFirstIteration,
+    growing,multimerN,countCollidingPairs,ODFLength,OCFMode,skipFirstIteration,
     useSpecificDirectory,useFileToIterate,fileIterateIterationsNumber=0,actIteration=0,multiplyArgument,
     onlyMath[2]={0,0};
 long cyclesOfEquilibration,cyclesOfMeasurement,timeEq=0,timeMe=0,timeMath=0,intervalSampling,intervalOutput,intervalResults,intervalOrientations;
 double maxDeltaR,desiredAcceptanceRatioR,desiredAcceptanceRatioV,
        startMinPacFrac,startMaxPacFrac,minArg,maxArg,loadedArg,
        intervalMin[10],intervalMax[10],intervalDelta[10],
-       startArg,deltaR,deltaV=0.1, //*sigma(=1)
+       startArg,deltaR,deltaPhi,deltaV=0.1, //*sigma(=1)
        multimerS,multimerD,randomStartStep[2],normalizingDenominator,
-       neighRadius,neighRadius2,neighSafeDistance,multiplyFactor,pressureRealOfNotFluid,
+       neighRadius,neighRadius2,neighRadiusMod,neighSafeDistance,multiplyFactor,pressureRealOfNotFluid,
        iterationTable[1000][2],pi=3.1415926535898;
 double L,C,ROkreguOpisanego,absoluteMinimum,absoluteMinimum2,minDistance,maxDistance,VcpPerParticle;
 char buffer[200]="",bufferN[20],bufferGaps[20],bufferG[5],bufferMN[20],bufferMS[20],bufferMD[20],bufferFolderIndex[5],
@@ -26,6 +26,7 @@ char buffer[200]="",bufferN[20],bufferGaps[20],bufferG[5],bufferMN[20],bufferMS[
      excelResultsFileName[200]="ExcelResultsSummary.txt",
      configurationsFileName[200]="Configurations",
      orientationsFileName[200]="Orientations",
+     orientatCorrelFunFileName[200]="OrientatCorrelFun",
      orientationsResultsFileName[200]="OrientatRes",
      configurationsListFileName[200]="ConfigurationsList.txt",
      loadConfigurationsFileName[200]="Configurations",
@@ -440,7 +441,7 @@ int attemptToDisplaceAParticle (particle *particles, int index, double boxMatrix
     for (int i=0;i<2;i++) particles[index].r[i]+=(MTGenerate(randomStartStep)%1000000/1000000.0-0.5)*deltaR;
     particles[index].normR[0]=(-boxMatrix[1][1]*particles[index].r[0]+boxMatrix[1][0]*particles[index].r[1])/normalizingDenominator;
     particles[index].normR[1]=(boxMatrix[1][0]*particles[index].r[0]-boxMatrix[0][0]*particles[index].r[1])/normalizingDenominator;
-    particles[index].phi+=(MTGenerate(randomStartStep)%1000000/1000000.0-0.5)*deltaR;
+    particles[index].phi+=(MTGenerate(randomStartStep)%1000000/1000000.0-0.5)*deltaPhi;
     //checkSinglePeriodicBoundaryConditions(&particles[index],boxMatrix); //matrix 6/16
     //for (int i=0;i<2;i++) particles[index].cell[i]=(int)(particles[index].normR[i]*bCSize[i]); //matrix 7/16
     int newEnPot=getEnergy(particles,index,boxMatrix);
@@ -610,6 +611,34 @@ void addAppendix (char *fileName, char *JOBID, bool jobIdOn) {
     strcpy(fileName,buffer);
 }
 
+void adjustOrientationsFile (FILE *file, char *path) {
+    if (file==NULL) {
+        file=fopen(path,"a"); fprintf(file,"{"); fclose(file);
+    } else if (!onlyMath[0]) {
+        char bufferForEraseLastChar[200],linia[110]; strcpy(bufferForEraseLastChar,path); strncat(bufferForEraseLastChar,"_BUFF",6);
+        FILE *bFELC = fopen(bufferForEraseLastChar,"w");
+        int poziomNawiasu=0;
+        while (fgets(linia,100,file)!=NULL) {
+            sscanf(linia,"%c",linia); int lastIndex=100;
+            for (int i=0;i<100;i++) {
+                if (linia[i]=='{') poziomNawiasu++;
+                else if (linia[i]=='}') poziomNawiasu--;
+                if (poziomNawiasu==0) {
+                    lastIndex=i;
+                    break;
+                }
+            }
+            if (lastIndex==100) fprintf(bFELC,"%s",linia);
+            else {
+                for (int i=0;i<lastIndex;i++) fprintf(bFELC,"%c",linia[i]);
+                fprintf(bFELC,"%c",',');
+            }
+        }
+        fclose(bFELC); fclose(file);
+        remove(path); rename(bufferForEraseLastChar,path);
+    }
+}
+
 double getNextArgument (double prevArg, bool countIterations) {
     if (countIterations) if (--iterationsNumber==0) growing=-1;
     if (useFileToIterate) {
@@ -680,24 +709,26 @@ int main(int argumentsNumber, char **arguments) {
                 case 15:intervalSampling=strtol(data,NULL,10);break;
                 case 16:intervalOutput=strtol(data,NULL,10);break;
                 case 17:ODFLength=strtol(data,NULL,10);break;
-                case 18:intervalOrientations=strtol(data,NULL,10);break;
-                case 19:skipFirstIteration=strtol(data,NULL,10);break;
-                case 20:useSpecificDirectory=strtol(data,NULL,10);break;
-                case 21:cyclesOfEquilibration=strtol(data,NULL,10);break;
-                case 22:cyclesOfMeasurement=strtol(data,NULL,10);break;
-                case 23:intervalResults=strtol(data,NULL,10);break;
-                case 24:maxDeltaR=strtod(data,NULL);break;
-                case 25:desiredAcceptanceRatioR=strtod(data,NULL);break;
-                case 26:desiredAcceptanceRatioV=strtod(data,NULL);break;
-                case 27:useFileToIterate=strtol(data,NULL,10);break;
-                case 28:startMinPacFrac=strtod(data,NULL);break;
-                case 29:startMaxPacFrac=strtod(data,NULL);break;
-                case 30:minArg=strtod(data,NULL);break;
-                case 31:maxArg=strtod(data,NULL);break;
-                case 32:multiplyArgument=strtol(data,NULL,10);break;
-                case 33:multiplyFactor=strtod(data,NULL);break;
+                case 18:OCFMode=strtol(data,NULL,10);break;
+                case 19:neighRadiusMod=strtod(data,NULL);break;
+                case 20:intervalOrientations=strtol(data,NULL,10);break;
+                case 21:skipFirstIteration=strtol(data,NULL,10);break;
+                case 22:useSpecificDirectory=strtol(data,NULL,10);break;
+                case 23:cyclesOfEquilibration=strtol(data,NULL,10);break;
+                case 24:cyclesOfMeasurement=strtol(data,NULL,10);break;
+                case 25:intervalResults=strtol(data,NULL,10);break;
+                case 26:maxDeltaR=strtod(data,NULL);break;
+                case 27:desiredAcceptanceRatioR=strtod(data,NULL);break;
+                case 28:desiredAcceptanceRatioV=strtod(data,NULL);break;
+                case 29:useFileToIterate=strtol(data,NULL,10);break;
+                case 30:startMinPacFrac=strtod(data,NULL);break;
+                case 31:startMaxPacFrac=strtod(data,NULL);break;
+                case 32:minArg=strtod(data,NULL);break;
+                case 33:maxArg=strtod(data,NULL);break;
+                case 34:multiplyArgument=strtol(data,NULL,10);break;
+                case 35:multiplyFactor=strtod(data,NULL);break;
                 default:
-                    switch ((dataIndex-34)%3) {
+                    switch ((dataIndex-36)%3) {
                         case 0: intervalMin[intervalLicznik++/3]=strtod(data,NULL);break;
                         case 1: intervalMax[intervalLicznik++/3]=strtod(data,NULL);break;
                         case 2: intervalDelta[intervalLicznik++/3]=strtod(data,NULL);break;
@@ -848,14 +879,14 @@ int main(int argumentsNumber, char **arguments) {
 
     //stale wynikajace z zadanych parametrow multimerow
     L=multimerS/multimerD;
-    C=pi/(double)multimerN;
+    C=pi/(double)multimerN; deltaPhi=deltaR*2.0*sin(C);
     ROkreguOpisanego=multimerS/(2.0*sin(C));
     absoluteMinimum=atan(L/(2.0*L/tan(C)+sqrt(4.0-L*L)));
     absoluteMinimum2=C-absoluteMinimum;
     if (multimerN%2==0) minDistance=getMinimalDistanceAnalyticalMethodForEvenHCM(absoluteMinimum,absoluteMinimum);
     else minDistance=getMinimalDistanceAnalyticalMethodForOddHCM(absoluteMinimum,absoluteMinimum-C);
     maxDistance=ROkreguOpisanego*2+multimerD;
-    neighRadius=1.5*/*dla 0.51 i fazy chiralnej 1.3 powinno wystarczyc*1.3*/maxDistance; neighRadius2=neighRadius*neighRadius; neighSafeDistance=neighRadius-maxDistance;
+    neighRadius=neighRadiusMod*maxDistance; neighRadius2=neighRadius*neighRadius; neighSafeDistance=neighRadius-maxDistance;
     if (multimerN==6) VcpPerParticle=minDistance*minDistance*sqrt(3)/2.0;  //dla heksamerow o dowolnym d/\sigma
     else if (multimerN==5) VcpPerParticle=5.0936*multimerD*multimerD;  //dla pentamerów o d/\sigma=1
     //nazwy folderow na podstawie parametrow programu
@@ -881,13 +912,14 @@ int main(int argumentsNumber, char **arguments) {
     addAppendix(configurationsFileName,JOBID,true);
     addAppendix(loadConfigurationsFileName,loadedJOBID,true); strncat(loadConfigurationsFileName,"_arg-",6); sprintf(buffer,"%.3f",loadedArg); strncat(loadConfigurationsFileName,buffer,100); strncat(loadConfigurationsFileName,".txt",5);
     addAppendix(orientationsFileName,JOBID,true);
+    if (OCFMode) addAppendix(orientatCorrelFunFileName,JOBID,true);
     addAppendix(orientationsResultsFileName,JOBID,true);
     addAppendix(configurationsListFileName,JOBID,false);
 
     particle particles[N];
     long arg5=0; double arg1, arg2, arg3, arg4, arg6, arg7, arg8, arg9, arg10;
 
-    FILE *fileResults, *fileExcelResults, *fileConfigurations, *fileOrientations, *fileConfigurationsList, *fileAllResults, *fileAllOrientations, *fileOrientationsResults, *fileAllOrientationsResults;
+    FILE *fileResults, *fileExcelResults, *fileConfigurations, *fileOrientations, *fileOrientatCorrelFun, *fileConfigurationsList, *fileAllResults, *fileAllOrientations, *fileOrientationsResults, *fileAllOrientationsResults;
     fileResults = fopen(resultsFileName,"rt"); if (fileResults==NULL) {
         fileResults = fopen(resultsFileName,"a");
         fprintf(fileResults,"Cycles\tPressureReduced\tVolume\tBoxMatrix[0][0]\tBoxMatrix[1][1]\tBoxMatrix[1][0]([0][1])\tRho\tV/V_cp\tS1111\tdS1111\tS1122\tdS1122\tS1212\tdS1212\tS2222\tdS2222\tavNu\tdAvNu\tavB\tdAvB\tavMy\tdAvMy\tavE\tdAvE\tODFMax_One\t<cos(6Phi)>_One\tODFMax_All\t<cos(6Phi)>_All\n");
@@ -957,7 +989,7 @@ int main(int argumentsNumber, char **arguments) {
                 arg10=strtod(pEnd,NULL);            //deltaV
 
                 boxMatrix[0][0]=arg6; boxMatrix[1][1]=arg7; boxMatrix[1][0]=arg8; boxMatrix[0][1]=arg8;
-                deltaR=arg9; deltaV=arg10;
+                deltaR=arg9; deltaPhi=deltaR*2.0*sin(C); deltaV=arg10;
                 arg=arg4; pressureReduced=arg; pressureReal=pressureReduced/multimerS/multimerS;
                 rho=arg3; pacFrac=1.0/VcpPerParticle/rho; volume=N/rho;
 
@@ -1031,47 +1063,30 @@ int main(int argumentsNumber, char **arguments) {
             int volumeMove=0, cycleCounter=0, indexScanned=(matrixOfParticlesSize[0]*round(matrixOfParticlesSize[1]*NLinearMod/2.0)-round(matrixOfParticlesSize[0]/2.0))*NLinearMod;
             //assignParticlesToCells(particles,boxMatrix); //matrix 15/16
 
-            char allResultsFileName[200],bufferConfigurations[200],bufferOrientations[200],allOrientationsFileName[200],bufferOrientationsResults[200],allOrientationsResultsFileName[200],bufferPressure[100];
+            char allResultsFileName[200],bufferConfigurations[200],bufferOrientations[200],bufferOrientatCorrelFun[200],allOrientationsFileName[200],bufferOrientationsResults[200],allOrientationsResultsFileName[200],bufferPressure[100];
             strcpy(allResultsFileName,configurationsFileName); strcpy(bufferConfigurations,configurationsFileName);
             strcpy(bufferOrientations,orientationsFileName); strcpy(allOrientationsFileName,orientationsFileName);
+            if (OCFMode) strcpy(bufferOrientatCorrelFun,orientatCorrelFunFileName);
             strcpy(bufferOrientationsResults,orientationsResultsFileName); strcpy(allOrientationsResultsFileName,orientationsResultsFileName);
             sprintf(bufferPressure,"%.3f",pressureReduced);
             strncat(allResultsFileName,"_arg-",6); strncat(allResultsFileName,bufferPressure,100); strncat(allResultsFileName,"_Results.txt",13);
             strncat(bufferConfigurations,"_arg-",6); strncat(bufferConfigurations,bufferPressure,100); strncat(bufferConfigurations,".txt",5);
             strncat(bufferOrientations,"_arg-",6); strncat(bufferOrientations,bufferPressure,100); strncat(bufferOrientations,".txt",5);
             strncat(allOrientationsFileName,"_arg-",6); strncat(allOrientationsFileName,bufferPressure,100); strncat(allOrientationsFileName,"_allOnt.txt",12);
+            if (OCFMode) {
+                strncat(bufferOrientatCorrelFun,"_arg-",6); strncat(bufferOrientatCorrelFun,bufferPressure,100); strncat(bufferOrientatCorrelFun,".txt",5);
+            }
             strncat(bufferOrientationsResults,"_arg-",6); strncat(bufferOrientationsResults,bufferPressure,100); strncat(bufferOrientationsResults,".txt",5);
             strncat(allOrientationsResultsFileName,"_arg-",6); strncat(allOrientationsResultsFileName,bufferPressure,100); strncat(allOrientationsResultsFileName,"_allOnt.txt",12);
 
-            fileOrientations=fopen(bufferOrientations,"rt");
-            if (fileOrientations==NULL) {
-                fileOrientations=fopen(bufferOrientations,"a"); fprintf(fileOrientations,"{"); fclose(fileOrientations);
-            } else if (!onlyMath[0]) {
-                char bufferForEraseLastChar[200],linia[110]; strcpy(bufferForEraseLastChar,bufferOrientations); strncat(bufferForEraseLastChar,"_BUFF",6);
-                FILE *bFELC = fopen(bufferForEraseLastChar,"w");
-                int poziomNawiasu=0;
-                while (fgets(linia,100,fileOrientations)!=NULL) {
-                    sscanf(linia,"%c",linia); int lastIndex=100;
-                    for (int i=0;i<100;i++) {
-                        if (linia[i]=='{') poziomNawiasu++;
-                        else if (linia[i]=='}') poziomNawiasu--;
-                        if (poziomNawiasu==0) {
-                            lastIndex=i;
-                            break;
-                        }
-                    }
-                    if (lastIndex==100) fprintf(bFELC,"%s",linia);
-                    else {
-                        for (int i=0;i<lastIndex;i++) fprintf(bFELC,"%c",linia[i]);
-                        fprintf(bFELC,"%c",',');
-                    }
-                }
-                fclose(bFELC); fclose(fileOrientations);
-                remove(bufferOrientations); rename(bufferForEraseLastChar,bufferOrientations);
-            }
             fileAllResults = fopen(allResultsFileName,"a");
+            adjustOrientationsFile(fileOrientations=fopen(bufferOrientations,"rt"),bufferOrientations);
             fileOrientations = fopen(bufferOrientations,"a");
             fileAllOrientations = fopen(allOrientationsFileName,"a");
+            if (OCFMode) {
+                adjustOrientationsFile(fileOrientatCorrelFun=fopen(bufferOrientatCorrelFun,"rt"),bufferOrientatCorrelFun);
+                fileOrientatCorrelFun = fopen(bufferOrientatCorrelFun,"a");
+            }
             if (onlyMath[0]) nStep=0;
 
             timeStart=time(0);
@@ -1193,6 +1208,34 @@ int main(int argumentsNumber, char **arguments) {
                                 /////skan po wszystkich cząstkach
                                 for (int i=0;i<activeN-1;i++) fprintf(fileAllOrientations,"%.12f,",particles[i].phi);
                                 fprintf(fileAllOrientations,"%.12f\n",particles[activeN-1].phi);
+                                /////OCF
+                                if (OCFMode) {
+                                    char bufferText[1000000]="", bufferAngle[20];
+                                    for (int i=0;i<activeN;i++) for (int j=0;j<particles[i].neighCounter;j++) {
+                                        if (i<particles[i].neighbours[j]) {
+                                            double normalizedRX=particles[i].normR[0]-particles[particles[i].neighbours[j]].normR[0],
+                                                   normalizedRY=particles[i].normR[1]-particles[particles[i].neighbours[j]].normR[1],
+                                                   rx=particles[i].r[0]-particles[particles[i].neighbours[j]].r[0],
+                                                   ry=particles[i].r[1]-particles[particles[i].neighbours[j]].r[1];
+                                            rx-=round(normalizedRX)*boxMatrix[0][0]+round(normalizedRY)*boxMatrix[0][1];
+                                            ry-=round(normalizedRX)*boxMatrix[1][0]+round(normalizedRY)*boxMatrix[1][1];
+                                            double gamma=atan(ry/rx),
+                                                   aAngle=particles[particles[i].neighbours[j]].phi-gamma,
+                                                   bAngle=particles[i].phi-gamma;
+                                            if (multimerN%2!=0) {
+                                                if (rx>0) bAngle-=C;
+                                                else aAngle-=C;
+                                            }
+                                            aAngle=normalizeAngle(aAngle+C); bAngle=normalizeAngle(bAngle+C);
+
+                                            strncat(bufferText,"{",2); sprintf(bufferAngle,"%.12f",aAngle); strncat(bufferText,bufferAngle,20);
+                                            strncat(bufferText,",",2); sprintf(bufferAngle,"%.12f",bAngle); strncat(bufferText,bufferAngle,20);
+                                            strncat(bufferText,"},",3);
+                                        }
+                                    }
+                                    if (cycle-cyclesOfEquilibration>=cyclesOfMeasurement) bufferText[strlen(bufferText)-1]='}';
+                                    fprintf(fileOrientatCorrelFun,"%s",bufferText);
+                                }
                             }
 
                             if (cycle%intervalOutput==0) {
@@ -1209,13 +1252,14 @@ int main(int argumentsNumber, char **arguments) {
                                 fprintf(fileConfigurations,"%.1f %.1f %.17f %.17f %ld %.17f %.17f %.17f %.17f %.17f {",randomStartStep[0],randomStartStep[1],rho,pressureReduced,(cycle+arg5),boxMatrix[0][0],boxMatrix[1][1],boxMatrix[0][1],deltaR,deltaV);
                                 for (int i=0;i<activeN;i++)
                                     fprintf(fileConfigurations,"m[%.17f,%.17f,%.17f,%.12f,%.12f,%d],",particles[i].r[0],particles[i].r[1],particles[i].phi,multimerS,multimerD,multimerN);
-                                fprintf(fileConfigurations,"{Opacity->0.2,Red,Polygon[{{0,0},{%.12f,%.12f},{%.12f,%.12f},{%.12f,%.12f}}]},{Opacity->0.2,Green,Disk[{%.12f,%.12f},%.12f]}}",boxMatrix[0][0],boxMatrix[1][0],boxMatrix[0][0]+boxMatrix[0][1],boxMatrix[1][0]+boxMatrix[1][1],boxMatrix[0][1],boxMatrix[1][1],particles[indexScanned].r[0],particles[indexScanned].r[1],neighRadius);
+                                fprintf(fileConfigurations,"{Opacity[0.2],Red,Polygon[{{0,0},{%.12f,%.12f},{%.12f,%.12f},{%.12f,%.12f}}]},{Opacity[0.2],Green,Disk[{%.12f,%.12f},%.12f]}}",boxMatrix[0][0],boxMatrix[1][0],boxMatrix[0][0]+boxMatrix[0][1],boxMatrix[1][0]+boxMatrix[1][1],boxMatrix[0][1],boxMatrix[1][1],particles[indexScanned].r[0],particles[indexScanned].r[1],neighRadius);
                                 fprintf(fileConfigurations,"\n==========================================\n\n\nboxMatrix[0][0]=%.12f, boxMatrix[1][1]=%.12f, boxMatrix[1][0]=boxMatrix[0][1]=%.12f",boxMatrix[0][0],boxMatrix[1][1],boxMatrix[1][0]);
                                 fclose(fileConfigurations);
                             }
                         } else {
                             if (acceptanceRatioR>desiredAcceptanceRatioR) deltaR*=1.05; else deltaR*=0.95;
                             if (deltaR>maxDeltaR) deltaR=maxDeltaR;
+                            deltaPhi=deltaR*2.0*sin(C);
                             if (acceptanceRatioV>desiredAcceptanceRatioV) deltaV*=1.05; else deltaV*=0.95;
                         }
                         attemptedNumberR=0; displacedNumberR=0;
@@ -1225,7 +1269,7 @@ int main(int argumentsNumber, char **arguments) {
                 }
             }
             fclose(fileAllResults);
-            fclose(fileOrientations); fclose(fileAllOrientations);
+            fclose(fileOrientations); fclose(fileAllOrientations); if (OCFMode) fclose(fileOrientatCorrelFun);
             if (timeEquilibration==0) timeEquilibration=time(0);
             timeEnd=time(0);
 
@@ -1493,9 +1537,9 @@ int main(int argumentsNumber, char **arguments) {
                     fprintf(fileConfigurations,"m[%.17f,%.17f,%.17f,%.12f,%.12f,%d],",particles[i].r[0],particles[i].r[1],particles[i].phi,multimerS,multimerD,multimerN);
                     fprintf(fileConfigurationsList,"m[%.12f+x,%.12f+y,%.12f,%.12f,%.12f,%d],",particles[i].r[0],particles[i].r[1],particles[i].phi,multimerS,multimerD,multimerN);
                 }
-                fprintf(fileConfigurations,"{Opacity->0.2,Red,Polygon[{{0,0},{%.12f,%.12f},{%.12f,%.12f},{%.12f,%.12f}}]},{Opacity->0.2,Green,Disk[{%.12f,%.12f},%.12f]}}",boxMatrix[0][0],boxMatrix[1][0],boxMatrix[0][0]+boxMatrix[0][1],boxMatrix[1][0]+boxMatrix[1][1],boxMatrix[0][1],boxMatrix[1][1],particles[indexScanned].r[0],particles[indexScanned].r[1],neighRadius);
+                fprintf(fileConfigurations,"{Opacity[0.2],Red,Polygon[{{0,0},{%.12f,%.12f},{%.12f,%.12f},{%.12f,%.12f}}]},{Opacity[0.2],Green,Disk[{%.12f,%.12f},%.12f]}}",boxMatrix[0][0],boxMatrix[1][0],boxMatrix[0][0]+boxMatrix[0][1],boxMatrix[1][0]+boxMatrix[1][1],boxMatrix[0][1],boxMatrix[1][1],particles[indexScanned].r[0],particles[indexScanned].r[1],neighRadius);
                 fprintf(fileConfigurations,"\n==========================================\n\n\nboxMatrix[0][0]=%.12f, boxMatrix[1][1]=%.12f, boxMatrix[1][0]=boxMatrix[0][1]=%.12f",boxMatrix[0][0],boxMatrix[1][1],boxMatrix[1][0]);
-                fprintf(fileConfigurationsList,"{Opacity->If[x==0 && y==0,0.4,0],Red,Polygon[{{0,0},{%.12f,%.12f},{%.12f,%.12f},{%.12f,%.12f}}]},{Opacity->If[x==0 && y==0,0.4,0],Green,Disk[{%.12f,%.12f},%.12f]}};\nconfigurationsList=Append[configurationsList,g[%.12f,multimers[%.12f,%.12f,kolorIndex=1],multimers[%.12f,%.12f,kolorIndex=1],multimers[%.12f,%.12f,kolorIndex=1],multimers[0,0,kolorIndex=1]]];\n",
+                fprintf(fileConfigurationsList,"{Opacity[If[x==0 && y==0,0.4,0]],Red,Polygon[{{0,0},{%.12f,%.12f},{%.12f,%.12f},{%.12f,%.12f}}]},{Opacity[If[x==0 && y==0,0.4,0]],Green,Disk[{%.12f,%.12f},%.12f]}};\nconfigurationsList=Append[configurationsList,g[%.12f,multimers[%.12f,%.12f,kolorIndex=1],multimers[%.12f,%.12f,kolorIndex=1],multimers[%.12f,%.12f,kolorIndex=1],multimers[0,0,kolorIndex=1]]];\n",
                         boxMatrix[0][0],boxMatrix[1][0],boxMatrix[0][0]+boxMatrix[0][1],boxMatrix[1][0]+boxMatrix[1][1],boxMatrix[0][1],boxMatrix[1][1],particles[indexScanned].r[0],particles[indexScanned].r[1],neighRadius,pacFrac,boxMatrix[0][0],boxMatrix[1][0],boxMatrix[0][0]+boxMatrix[0][1],boxMatrix[1][0]+boxMatrix[1][1],boxMatrix[0][1],boxMatrix[1][1]);
             }
 
