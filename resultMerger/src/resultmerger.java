@@ -43,6 +43,16 @@ public class resultmerger {
                         }
                         zapis.close(); czytnik.close();
                     } catch (Exception e2) {System.err.print("Error in: "+actualDirectory.getAbsolutePath()+"/"+actualDirectory.list()[j]+". "); e2.printStackTrace();}
+                } else if (actualDirectory.list()[j].endsWith("transient.txt")) {
+                    try {
+                        BufferedReader czytnik = new BufferedReader(new FileReader(actualDirectory.getAbsolutePath()+"/"+actualDirectory.list()[j]));
+                        int skipChars = actualDirectory.list()[j].split("_")[0].length();
+                        BufferedWriter zapis = new BufferedWriter(new FileWriter(resultsDirectory.getAbsolutePath()+"/j-none_"+actualDirectory.list()[j].substring(skipChars+1),true));
+                        String buffer; while ((buffer=czytnik.readLine())!=null) {
+                            zapis.write(buffer); zapis.newLine();
+                        }
+                        zapis.close(); czytnik.close();
+                    } catch (Exception e2) {System.err.print("Error in: "+actualDirectory.getAbsolutePath()+"/"+actualDirectory.list()[j]+". "); e2.printStackTrace();}
                 } else if (actualDirectory.list()[j].endsWith("allOnt.txt") && actualDirectory.list()[j].contains("Orientations")) {
                     try {//sprawdza pierwszy wiersz, gdy zawiera on wiecej ujemnych katow (50%), to laczenie nastepuje z odwroceniem katow. W efekcie, wyzszy pik zawsze jest dodatni.
                         BufferedReader czytnik = new BufferedReader(new FileReader(actualDirectory.getAbsolutePath()+"/"+actualDirectory.list()[j]));

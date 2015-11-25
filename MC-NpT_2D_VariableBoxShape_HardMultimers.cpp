@@ -9,10 +9,10 @@
 #include "MTGenerator.h"
 
 int N,gaps,activeN,loadedConfiguration,loadType=0,loadedSetStartGenerator,loadedSetGenerator,iterationsNumber,
-    growing,multimerN,countCollidingPairs,ODFLength,OCFMode,skipFirstIteration,
+    growing,multimerN,countCollidingPairs,ODFLength,OCFMode,skipFirstIteration,saveConfigurations,
     useSpecificDirectory,useFileToIterate,fileIterateIterationsNumber=0,actIteration=0,multiplyArgument,
     onlyMath[2]={0,0};
-long cyclesOfEquilibration,cyclesOfMeasurement,timeEq=0,timeMe=0,timeMath=0,intervalSampling,intervalOutput,intervalResults,intervalOrientations;
+long cyclesOfEquilibration,cyclesOfMeasurement,timeEq=0,timeMe=0,timeMath=0,intervalSampling,intervalOutput,intervalResults,intervalOrientations,savedConfigurationsInt;
 double maxDeltaR,desiredAcceptanceRatioR,desiredAcceptanceRatioV,
        startMinPacFrac,startMaxPacFrac,minArg,maxArg,loadedArg,
        intervalMin[10],intervalMax[10],intervalDelta[10],
@@ -363,7 +363,7 @@ void checkSinglePeriodicBoundaryConditions (particle *particle, double boxMatrix
             }
         } while (change==1);
     }
-    particle->phi=normalizeAngle(particle->phi);
+    //particle->phi=normalizeAngle(particle->phi);    //rotationsAnalysis(comment) 1/1
 }
 
 void checkPeriodicBoundaryConditions (particle *particles, double boxMatrix[2][2]) {
@@ -708,27 +708,29 @@ int main(int argumentsNumber, char **arguments) {
                 case 14:countCollidingPairs=strtol(data,NULL,10);break;
                 case 15:intervalSampling=strtol(data,NULL,10);break;
                 case 16:intervalOutput=strtol(data,NULL,10);break;
-                case 17:ODFLength=strtol(data,NULL,10);break;
-                case 18:OCFMode=strtol(data,NULL,10);break;
-                case 19:neighRadiusMod=strtod(data,NULL);break;
-                case 20:intervalOrientations=strtol(data,NULL,10);break;
-                case 21:skipFirstIteration=strtol(data,NULL,10);break;
-                case 22:useSpecificDirectory=strtol(data,NULL,10);break;
-                case 23:cyclesOfEquilibration=strtol(data,NULL,10);break;
-                case 24:cyclesOfMeasurement=strtol(data,NULL,10);break;
-                case 25:intervalResults=strtol(data,NULL,10);break;
-                case 26:maxDeltaR=strtod(data,NULL);break;
-                case 27:desiredAcceptanceRatioR=strtod(data,NULL);break;
-                case 28:desiredAcceptanceRatioV=strtod(data,NULL);break;
-                case 29:useFileToIterate=strtol(data,NULL,10);break;
-                case 30:startMinPacFrac=strtod(data,NULL);break;
-                case 31:startMaxPacFrac=strtod(data,NULL);break;
-                case 32:minArg=strtod(data,NULL);break;
-                case 33:maxArg=strtod(data,NULL);break;
-                case 34:multiplyArgument=strtol(data,NULL,10);break;
-                case 35:multiplyFactor=strtod(data,NULL);break;
+                case 17:saveConfigurations=strtol(data,NULL,10);break;
+                case 18:savedConfigurationsInt=strtol(data,NULL,10);break;
+                case 19:ODFLength=strtol(data,NULL,10);break;
+                case 20:OCFMode=strtol(data,NULL,10);break;
+                case 21:neighRadiusMod=strtod(data,NULL);break;
+                case 22:intervalOrientations=strtol(data,NULL,10);break;
+                case 23:skipFirstIteration=strtol(data,NULL,10);break;
+                case 24:useSpecificDirectory=strtol(data,NULL,10);break;
+                case 25:cyclesOfEquilibration=strtol(data,NULL,10);break;
+                case 26:cyclesOfMeasurement=strtol(data,NULL,10);break;
+                case 27:intervalResults=strtol(data,NULL,10);break;
+                case 28:maxDeltaR=strtod(data,NULL);break;
+                case 29:desiredAcceptanceRatioR=strtod(data,NULL);break;
+                case 30:desiredAcceptanceRatioV=strtod(data,NULL);break;
+                case 31:useFileToIterate=strtol(data,NULL,10);break;
+                case 32:startMinPacFrac=strtod(data,NULL);break;
+                case 33:startMaxPacFrac=strtod(data,NULL);break;
+                case 34:minArg=strtod(data,NULL);break;
+                case 35:maxArg=strtod(data,NULL);break;
+                case 36:multiplyArgument=strtol(data,NULL,10);break;
+                case 37:multiplyFactor=strtod(data,NULL);break;
                 default:
-                    switch ((dataIndex-36)%3) {
+                    switch ((dataIndex-38)%3) {
                         case 0: intervalMin[intervalLicznik++/3]=strtod(data,NULL);break;
                         case 1: intervalMax[intervalLicznik++/3]=strtod(data,NULL);break;
                         case 2: intervalDelta[intervalLicznik++/3]=strtod(data,NULL);break;
@@ -919,7 +921,7 @@ int main(int argumentsNumber, char **arguments) {
     particle particles[N];
     long arg5=0; double arg1, arg2, arg3, arg4, arg6, arg7, arg8, arg9, arg10;
 
-    FILE *fileResults, *fileExcelResults, *fileConfigurations, *fileOrientations, *fileOrientatCorrelFun, *fileConfigurationsList, *fileAllResults, *fileAllOrientations, *fileOrientationsResults, *fileAllOrientationsResults;
+    FILE *fileResults, *fileExcelResults, *fileConfigurations, *fileSavedConfigurations, *fileOrientations, *fileOrientatCorrelFun, *fileConfigurationsList, *fileAllResults, *fileAllOrientations, *fileOrientationsResults, *fileAllOrientationsResults;
     fileResults = fopen(resultsFileName,"rt"); if (fileResults==NULL) {
         fileResults = fopen(resultsFileName,"a");
         fprintf(fileResults,"Cycles\tPressureReduced\tVolume\tBoxMatrix[0][0]\tBoxMatrix[1][1]\tBoxMatrix[1][0]([0][1])\tRho\tV/V_cp\tS1111\tdS1111\tS1122\tdS1122\tS1212\tdS1212\tS2222\tdS2222\tavNu\tdAvNu\tavB\tdAvB\tavMy\tdAvMy\tavE\tdAvE\tODFMax_One\t<cos(6Phi)>_One\tODFMax_All\t<cos(6Phi)>_All\n");
@@ -1063,14 +1065,14 @@ int main(int argumentsNumber, char **arguments) {
             int volumeMove=0, cycleCounter=0, indexScanned=(matrixOfParticlesSize[0]*round(matrixOfParticlesSize[1]*NLinearMod/2.0)-round(matrixOfParticlesSize[0]/2.0))*NLinearMod;
             //assignParticlesToCells(particles,boxMatrix); //matrix 15/16
 
-            char allResultsFileName[200],bufferConfigurations[200],bufferOrientations[200],bufferOrientatCorrelFun[200],allOrientationsFileName[200],bufferOrientationsResults[200],allOrientationsResultsFileName[200],bufferPressure[100];
+            char allResultsFileName[200],bufferConfigurations[200],bufferSavedConfigurations[200],bufferOrientations[200],bufferOrientatCorrelFun[200],allOrientationsFileName[200],bufferOrientationsResults[200],allOrientationsResultsFileName[200],bufferPressure[100];
             strcpy(allResultsFileName,configurationsFileName); strcpy(bufferConfigurations,configurationsFileName);
             strcpy(bufferOrientations,orientationsFileName); strcpy(allOrientationsFileName,orientationsFileName);
             if (OCFMode) strcpy(bufferOrientatCorrelFun,orientatCorrelFunFileName);
             strcpy(bufferOrientationsResults,orientationsResultsFileName); strcpy(allOrientationsResultsFileName,orientationsResultsFileName);
             sprintf(bufferPressure,"%.3f",pressureReduced);
             strncat(allResultsFileName,"_arg-",6); strncat(allResultsFileName,bufferPressure,100); strncat(allResultsFileName,"_Results.txt",13);
-            strncat(bufferConfigurations,"_arg-",6); strncat(bufferConfigurations,bufferPressure,100); strncat(bufferConfigurations,".txt",5);
+            strncat(bufferConfigurations,"_arg-",6); strncat(bufferConfigurations,bufferPressure,100); strcpy(bufferSavedConfigurations,bufferConfigurations); strncat(bufferConfigurations,".txt",5); strncat(bufferSavedConfigurations,"_transient.txt",15);
             strncat(bufferOrientations,"_arg-",6); strncat(bufferOrientations,bufferPressure,100); strncat(bufferOrientations,".txt",5);
             strncat(allOrientationsFileName,"_arg-",6); strncat(allOrientationsFileName,bufferPressure,100); strncat(allOrientationsFileName,"_allOnt.txt",12);
             if (OCFMode) {
@@ -1083,6 +1085,7 @@ int main(int argumentsNumber, char **arguments) {
             adjustOrientationsFile(fileOrientations=fopen(bufferOrientations,"rt"),bufferOrientations);
             fileOrientations = fopen(bufferOrientations,"a");
             fileAllOrientations = fopen(allOrientationsFileName,"a");
+            if (saveConfigurations) fileSavedConfigurations = fopen(bufferSavedConfigurations,"a");
             if (OCFMode) {
                 adjustOrientationsFile(fileOrientatCorrelFun=fopen(bufferOrientatCorrelFun,"rt"),bufferOrientatCorrelFun);
                 fileOrientatCorrelFun = fopen(bufferOrientatCorrelFun,"a");
@@ -1238,6 +1241,15 @@ int main(int argumentsNumber, char **arguments) {
                                 }
                             }
 
+                            if (saveConfigurations && cycle%savedConfigurationsInt==0) {
+                                fprintf(fileSavedConfigurations,"%ld\t%.12f\t%.12f\t%.12f\t{",(cycle+arg5),boxMatrix[0][0],boxMatrix[1][1],boxMatrix[1][0]);
+                                int activeNMinus1=activeN-1;
+                                for (int i=0;i<activeNMinus1;i++)
+                                    fprintf(fileSavedConfigurations,"m[%.17f,%.17f,%.17f],",particles[i].r[0],particles[i].r[1],particles[i].phi);
+                                fprintf(fileSavedConfigurations,"m[%.17f,%.17f,%.17f]}",particles[activeNMinus1].r[0],particles[activeNMinus1].r[1],particles[activeNMinus1].phi);
+                                fprintf(fileSavedConfigurations,"\n");
+                            }
+
                             if (cycle%intervalOutput==0) {
                                 if (countCollidingPairs) printf("Cycle: %ld, CollPairs: %d\n",(cycle+arg5),collidingPairs);
                                 else printf("Cycle: %ld\n",(cycle+arg5));
@@ -1269,7 +1281,8 @@ int main(int argumentsNumber, char **arguments) {
                 }
             }
             fclose(fileAllResults);
-            fclose(fileOrientations); fclose(fileAllOrientations); if (OCFMode) fclose(fileOrientatCorrelFun);
+            fclose(fileOrientations); fclose(fileAllOrientations);
+            if (saveConfigurations) fclose(fileSavedConfigurations); if (OCFMode) fclose(fileOrientatCorrelFun);
             if (timeEquilibration==0) timeEquilibration=time(0);
             timeEnd=time(0);
 
