@@ -924,12 +924,14 @@ int main(int argumentsNumber, char **arguments) {
     FILE *fileResults, *fileExcelResults, *fileConfigurations, *fileSavedConfigurations, *fileOrientations, *fileOrientatCorrelFun, *fileConfigurationsList, *fileAllResults, *fileAllOrientations, *fileOrientationsResults, *fileAllOrientationsResults;
     fileResults = fopen(resultsFileName,"rt"); if (fileResults==NULL) {
         fileResults = fopen(resultsFileName,"a");
-        fprintf(fileResults,"Cycles\tPressureReduced\tVolume\tBoxMatrix[0][0]\tBoxMatrix[1][1]\tBoxMatrix[1][0]([0][1])\tRho\tV/V_cp\tS1111\tdS1111\tS1122\tdS1122\tS1212\tdS1212\tS2222\tdS2222\tavNu\tdAvNu\tavB\tdAvB\tavMy\tdAvMy\tavE\tdAvE\tODFMax_One\t<cos(6Phi)>_One\tODFMax_All\t<cos(6Phi)>_All\n");
+        if (saveConfigurations) fprintf(fileResults,"Cycles\tPressureReduced\tVolume\tBoxMatrix[0][0]\tBoxMatrix[1][1]\tBoxMatrix[1][0]([0][1])\tRho\tV/V_cp\tS1111\tdS1111\tS1122\tdS1122\tS1212\tdS1212\tS2222\tdS2222\tavNu\tdAvNu\tavB\tdAvB\tavMy\tdAvMy\tavE\tdAvE\tODFMax_One\t<cos(6Phi)>_One\tODFMax_All\t<cos(6Phi)>_All\tdPhiCyclesInterval\tavAbsDPhi\n");
+        else fprintf(fileResults,"Cycles\tPressureReduced\tVolume\tBoxMatrix[0][0]\tBoxMatrix[1][1]\tBoxMatrix[1][0]([0][1])\tRho\tV/V_cp\tS1111\tdS1111\tS1122\tdS1122\tS1212\tdS1212\tS2222\tdS2222\tavNu\tdAvNu\tavB\tdAvB\tavMy\tdAvMy\tavE\tdAvE\tODFMax_One\t<cos(6Phi)>_One\tODFMax_All\t<cos(6Phi)>_All\n");
         fclose(fileResults);
     }
     fileExcelResults = fopen(excelResultsFileName,"rt"); if (fileExcelResults==NULL) {
         fileExcelResults = fopen(excelResultsFileName,"a");
-        fprintf(fileExcelResults,"PressureReduced\tV/V_cp\tavNu\tODFMax_All\t<cos(6Phi)>_All\tavB\tavMy\tavE\n");
+        if (saveConfigurations) fprintf(fileExcelResults,"PressureReduced\tV/V_cp\tavNu\tODFMax_All\t<cos(6Phi)>_All\tavB\tavMy\tavE\tdPhiCyclesInterval\tavAbsDPhi\n");
+        else fprintf(fileExcelResults,"PressureReduced\tV/V_cp\tavNu\tODFMax_All\t<cos(6Phi)>_All\tavB\tavMy\tavE\n");
         fclose(fileExcelResults);
     }
 
@@ -1517,6 +1519,45 @@ int main(int argumentsNumber, char **arguments) {
             averageCos6PhiAll/=componentCounter; for (int i=0;i<ODFLength;i++) if (ODFMaxAll<ODF_AllP[i]) ODFMaxAll=ODF_AllP[i];
             printf("done\n");
 
+            //analiza konfiguracji przejsciowych
+            double avAbsDPhi=0;
+            if (saveConfigurations) {
+                printf("Transient configurations analysis... ");
+                fileSavedConfigurations = fopen(bufferSavedConfigurations,"rt");
+                char configurations[activeN*70+100];
+                double prevCfg[activeN][3]; bool undefinedPrevCfg=true;
+                int CfgQuantity=0,CfgFileQuantity=0;
+                while(fgets(configurations,activeN*70+100,fileSavedConfigurations)!=NULL) {//newCfgFile
+                    int actIndex=0;
+                    if (configurations[actIndex]=='n') {    //newCfgFile (after merging)
+                        undefinedPrevCfg=true;
+                        continue;
+                    } else CfgQuantity++;
+                    while (configurations[actIndex]!='{') actIndex++;
+                    actIndex+=3;
+                    for (int i=0;i<activeN;i++) {
+                        for (int j=0;j<3;j++) {
+                            char coordinate[50];
+                            licznik=0;
+                            while (configurations[actIndex]!=',' && configurations[actIndex]!=']') coordinate[licznik++]=configurations[actIndex++];
+                            if (j<2) {  //polozenie
+                                actIndex++;
+                            } else {    //orientacja
+                                actIndex+=4;
+                                if (!undefinedPrevCfg) {
+                                    avAbsDPhi+=fabs(strtod(coordinate,NULL)-prevCfg[i][j]);
+                                }
+                            }
+                            prevCfg[i][j]=strtod(coordinate,NULL);
+                        }
+                    }
+                    if (undefinedPrevCfg) {undefinedPrevCfg=false; CfgFileQuantity++;}
+                }
+                fclose(fileSavedConfigurations);
+                avAbsDPhi/=(double)activeN*(CfgQuantity-CfgFileQuantity);
+                printf("done\n");
+            }
+
             long timeEndMath=time(0);
 
 
@@ -1536,8 +1577,13 @@ int main(int argumentsNumber, char **arguments) {
             fileOrientationsResults = fopen(bufferOrientationsResults,"w");
             fileAllOrientationsResults = fopen(allOrientationsResultsFileName,"w");
 
-            fprintf(fileResults,"%ld\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\n",(cycle+arg5),pressureReduced,avVolume,avBoxMatrix[0],avBoxMatrix[1],avBoxMatrix[2],avRho,avPacFrac,s1111,dS1111,s1122,dS1122,s1212,dS1212,s2222,dS2222,avNu,dAvNu,avB,dAvB,avMy,dAvMy,avE,dAvE,ODFMaxOne,averageCos6PhiOne,ODFMaxAll,averageCos6PhiAll);
-            fprintf(fileExcelResults,"%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\n",pressureReduced,avPacFrac,avNu,ODFMaxAll,averageCos6PhiAll,avB,avMy,avE);
+            if (saveConfigurations) {
+                fprintf(fileResults,"%ld\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%ld\t%.12f\n",(cycle+arg5),pressureReduced,avVolume,avBoxMatrix[0],avBoxMatrix[1],avBoxMatrix[2],avRho,avPacFrac,s1111,dS1111,s1122,dS1122,s1212,dS1212,s2222,dS2222,avNu,dAvNu,avB,dAvB,avMy,dAvMy,avE,dAvE,ODFMaxOne,averageCos6PhiOne,ODFMaxAll,averageCos6PhiAll,savedConfigurationsInt,avAbsDPhi);
+                fprintf(fileExcelResults,"%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%ld\t%.12f\n",pressureReduced,avPacFrac,avNu,ODFMaxAll,averageCos6PhiAll,avB,avMy,avE,savedConfigurationsInt,avAbsDPhi);
+            } else {
+                fprintf(fileResults,"%ld\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\n",(cycle+arg5),pressureReduced,avVolume,avBoxMatrix[0],avBoxMatrix[1],avBoxMatrix[2],avRho,avPacFrac,s1111,dS1111,s1122,dS1122,s1212,dS1212,s2222,dS2222,avNu,dAvNu,avB,dAvB,avMy,dAvMy,avE,dAvE,ODFMaxOne,averageCos6PhiOne,ODFMaxAll,averageCos6PhiAll);
+                fprintf(fileExcelResults,"%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\n",pressureReduced,avPacFrac,avNu,ODFMaxAll,averageCos6PhiAll,avB,avMy,avE);
+            }
 
             if (!onlyMath[0]) {
                 rho=N/volume; pacFrac=1.0/VcpPerParticle/rho;

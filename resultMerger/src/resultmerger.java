@@ -48,6 +48,7 @@ public class resultmerger {
                         BufferedReader czytnik = new BufferedReader(new FileReader(actualDirectory.getAbsolutePath()+"/"+actualDirectory.list()[j]));
                         int skipChars = actualDirectory.list()[j].split("_")[0].length();
                         BufferedWriter zapis = new BufferedWriter(new FileWriter(resultsDirectory.getAbsolutePath()+"/j-none_"+actualDirectory.list()[j].substring(skipChars+1),true));
+                        zapis.write("newCfgFile"); zapis.newLine();
                         String buffer; while ((buffer=czytnik.readLine())!=null) {
                             zapis.write(buffer); zapis.newLine();
                         }
