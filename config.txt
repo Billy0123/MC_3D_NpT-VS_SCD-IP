@@ -15,7 +15,7 @@ iterationsNumber	=1;		//0-wiecej iteracji, x(>0)-x iteracji (UWAGA: skipFirstIte
 countCollidingPairs	=1;		//0-nie wypisuj kolizji przy pomiarach, 1-wypisuj kolizje
 intervalSampling	=5;		//liczba cykli, co ktora sprawdzane sa akceptacje (w trakcie rownowagowania -> sa dostosowywane, po rownowagowaniu -> dzialaja metody zapisujace wyniki)
 intervalOutput		=100000;	//liczba cykli, co ktora wypisywany jest aktualny stan ukladu oraz robiony checkpoint jego konfiguracji - wielokrotnosc intervalSampling
-saveConfigurations	=1;		//0-nie zapisuj.., 1-zapisuj konfiguracje przejsciowe
+saveConfigurations	=1;		//0-nie zapisuj.., 1-zapisuj konfiguracje przejsciowe i przeprowadzaj TransientAnalysis (aktualnie: uzyskiwanie wartosci avAbsDPhi)
 savedConfigurationsInt	=100;		//gdy saveConfigurations==1: liczba cykli, co ktora zapisywane sa konfiguracje przejsciowe - wielokrotnosc intervalSampling
 ODFLength		=201;		//liczba slupkow histogramu Orientational Distribution Function - nieparzysta wartosc (dla 0 po srodku)
 OCFMode			=0;		//0-OFF, 1-ON, zbieranie danych OCF o interwale intervalOrientations
