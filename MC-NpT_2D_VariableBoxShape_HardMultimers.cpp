@@ -468,18 +468,24 @@ int attemptToDisplaceAParticle (particle *particles, int index, double boxMatrix
 
 int attemptToChangeVolume (particle *particles, double pressure, double boxMatrix[2][2], double *volume) {
     int result=1;
-    double lnNewBoxMatrix[2][2], newBoxMatrix[2][2];
+    double /*lnNewBoxMatrix[2][2], */newBoxMatrix[2][2];
     if (pressure>pressureRealOfNotFluid) {  //dozwolone zmiany ksztaltu pudla (faza stala)
-        for (int i=0;i<2;i++) for (int j=0;j<2;j++) lnNewBoxMatrix[i][j]=log(boxMatrix[i][j]);
+        /*for (int i=0;i<2;i++) for (int j=0;j<2;j++) lnNewBoxMatrix[i][j]=log(boxMatrix[i][j]);
         lnNewBoxMatrix[0][0]+=(MTGenerate(randomStartStep)%1000000/1000000.0-0.5)*deltaV;
         lnNewBoxMatrix[1][1]+=(MTGenerate(randomStartStep)%1000000/1000000.0-0.5)*deltaV;
         if (boxMatrix[1][0]==0) lnNewBoxMatrix[1][0]=-20.0+(MTGenerate(randomStartStep)%1000000/1000000.0-0.5)*deltaV; //log(0) -> -\infty; E^~0 za duze jak na start
         else lnNewBoxMatrix[1][0]+=(MTGenerate(randomStartStep)%1000000/1000000.0-0.5)*deltaV;
         lnNewBoxMatrix[0][1]=lnNewBoxMatrix[1][0];
-        for (int i=0;i<2;i++) for (int j=0;j<2;j++) newBoxMatrix[i][j]=exp(lnNewBoxMatrix[i][j]);
+        for (int i=0;i<2;i++) for (int j=0;j<2;j++) newBoxMatrix[i][j]=exp(lnNewBoxMatrix[i][j]);*/
+        newBoxMatrix[0][0]=boxMatrix[0][0]+(MTGenerate(randomStartStep)%1000000/1000000.0-0.5)*deltaV;
+        newBoxMatrix[1][1]=boxMatrix[1][1]+(MTGenerate(randomStartStep)%1000000/1000000.0-0.5)*deltaV;
+        newBoxMatrix[1][0]=boxMatrix[1][0]+(MTGenerate(randomStartStep)%1000000/1000000.0-0.5)*deltaV;
+        newBoxMatrix[0][1]=newBoxMatrix[1][0];
     } else {    //NIEdozwolone zmiany ksztaltu pudla (faza plynu)
-        lnNewBoxMatrix[0][0]=log(boxMatrix[0][0])+(MTGenerate(randomStartStep)%1000000/1000000.0-0.5)*deltaV;
-        newBoxMatrix[0][0]=exp(lnNewBoxMatrix[0][0]);
+        /*lnNewBoxMatrix[0][0]=log(boxMatrix[0][0])+(MTGenerate(randomStartStep)%1000000/1000000.0-0.5)*deltaV;
+        newBoxMatrix[0][0]=exp(lnNewBoxMatrix[0][0]);*/
+        newBoxMatrix[0][0]=boxMatrix[0][0]+(MTGenerate(randomStartStep)%1000000/1000000.0-0.5)*deltaV;
+
         newBoxMatrix[1][1]=boxMatrix[1][1]/boxMatrix[0][0]*newBoxMatrix[0][0];
         newBoxMatrix[0][1]=boxMatrix[0][1]; newBoxMatrix[1][0]=boxMatrix[1][0];
     }
@@ -567,7 +573,7 @@ int attemptToChangeVolume (particle *particles, double pressure, double boxMatri
     }
 
     if (result) {
-        double arg=-(pressure*(newVolume-(*volume))-(((double)N+1)*log(newVolume/(*volume))+log((newBoxMatrix[0][0]+newBoxMatrix[1][1])/(boxMatrix[0][0]+boxMatrix[1][1]))));
+        double arg=-(pressure*(newVolume-(*volume))-(((double)N)*log(newVolume/(*volume))+log((newBoxMatrix[0][0]+newBoxMatrix[1][1])/(boxMatrix[0][0]+boxMatrix[1][1]))));
         if (MTGenerate(randomStartStep)%1000000/1000000.0>exp(arg)) result=0;
         if (result) {
             *volume=newVolume;
@@ -1519,7 +1525,7 @@ int main(int argumentsNumber, char **arguments) {
             averageCos6PhiAll/=componentCounter; for (int i=0;i<ODFLength;i++) if (ODFMaxAll<ODF_AllP[i]) ODFMaxAll=ODF_AllP[i];
             printf("done\n");
 
-            //analiza konfiguracji przejsciowych
+            //analiza konfiguracji przejsciowych (dPhi z konfiguracji na konfiguracje)
             double avAbsDPhi=0;
             if (saveConfigurations) {
                 printf("Transient configurations analysis... ");

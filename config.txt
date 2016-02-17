@@ -1,5 +1,5 @@
 bufferValue		=12345;		//test dla odczytu pierwszej wartosci (12345), dla przeczyszczenia buforu
-N			=56;		//obslugiwane: N%56==0, N%780==0
+N			=224;		//obslugiwane: N%56==0, N%780==0
 gaps			=0;		//liczba luk w ukladzie (dziur-defektow), rozmieszczonych losowo przy inicie (nie zbyt blisko)
 multimerN		=6;		//obslugiwane: 5, 6
 multimerS		=1.00;		//dlugosc bokow n-katow foremnych
@@ -12,27 +12,27 @@ loadedJOBID		=none;		//gdy loadedConfiguration=1, wskaze JOBID pliku konfiguracj
 loadedSetStartGenerator	=0;		//0-ustaw pozycje startowa generatora na aktualny czas procesora, 1-ustaw pozycje startowa generatora na wskazanie pliku LOAD
 loadedSetGenerator	=0;		//0-nie ustawiaj generatora na pozycje wskazywana przez plik LOAD, 1-ustaw generator na pozycje wskazywana przez plik LOAD
 iterationsNumber	=1;		//0-wiecej iteracji, x(>0)-x iteracji (UWAGA: skipFirstIteration=1 pomija pierwsza)
-countCollidingPairs	=1;		//0-nie wypisuj kolizji przy pomiarach, 1-wypisuj kolizje
+countCollidingPairs	=0;		//0-nie wypisuj kolizji przy pomiarach, 1-wypisuj kolizje
 intervalSampling	=5;		//liczba cykli, co ktora sprawdzane sa akceptacje (w trakcie rownowagowania -> sa dostosowywane, po rownowagowaniu -> dzialaja metody zapisujace wyniki)
-intervalOutput		=100000;	//liczba cykli, co ktora wypisywany jest aktualny stan ukladu oraz robiony checkpoint jego konfiguracji - wielokrotnosc intervalSampling
+intervalOutput		=10000;	//liczba cykli, co ktora wypisywany jest aktualny stan ukladu oraz robiony checkpoint jego konfiguracji - wielokrotnosc intervalSampling
 saveConfigurations	=1;		//0-nie zapisuj.., 1-zapisuj konfiguracje przejsciowe i przeprowadzaj TransientAnalysis (aktualnie: uzyskiwanie wartosci avAbsDPhi)
-savedConfigurationsInt	=100;		//gdy saveConfigurations==1: liczba cykli, co ktora zapisywane sa konfiguracje przejsciowe - wielokrotnosc intervalSampling
+savedConfigurationsInt	=20;		//gdy saveConfigurations==1: liczba cykli, co ktora zapisywane sa konfiguracje przejsciowe - wielokrotnosc intervalSampling
 ODFLength		=201;		//liczba slupkow histogramu Orientational Distribution Function - nieparzysta wartosc (dla 0 po srodku)
 OCFMode			=0;		//0-OFF, 1-ON, zbieranie danych OCF o interwale intervalOrientations
 neighRadiusMod		=1.4;		//neighRadius=neighRadiusMod*maxDistance (najblizsi sasiedzi)
 intervalOrientations	=1000;		//liczba cykli, co ktora zapisywana jest orientacja czastki - wielokrotnosc intervalSampling
 skipFirstIteration	=0;		//0-zacznij badanie od pierwszego punktu pomiarowego, 1-zacznij badanie od drugiego punktu pomiarowego
-useSpecificDirectory	=0;		//0-stworz nowy folder (kolejny), x(>0)-uzyj (stworz) folder o numerze x
-cyclesOfEquilibration	=3000;	//cykle na rozruch
-cyclesOfMeasurement	=10000;	//cykle na pomiar (po rozruchu)
+useSpecificDirectory	=1;		//0-stworz nowy folder (kolejny), x(>0)-uzyj (stworz) folder o numerze x
+cyclesOfEquilibration	=10000;	//cykle na rozruch
+cyclesOfMeasurement	=2000000;	//cykle na pomiar (po rozruchu)
 intervalResults		=10;		//liczba cykli, co ktora zapisywane sa mierzone wielkosci - wielokrotnosc intervalSampling
 maxDeltaR		=0.15;		//najwieksza wartosc ruchu probnego czastki
 desiredAcceptanceRatioR	=0.3;		//wartosc akceptacji ruchow probnych czastek
 desiredAcceptanceRatioV	=0.2;		//wartosc akceptacji ruchow probnych pudla
-useFileToIterate	=1;		//0-stosuj PONIZSZE ustawienia, 1-korzystaj z pliku 'startArguments.txt' do iterowania (plik ustawiony DOMYSLNIE na growing=1, max 1000 iteracji; UWAGA-kolumny: pierwsza:pacFrac[dowolna], druga:pressure[.3])
-startMinPacFrac		=1.4;	//wartosc pacFrac, (startowe V przy growing=1)
+useFileToIterate	=0;		//0-stosuj PONIZSZE ustawienia, 1-korzystaj z pliku 'startArguments.txt' do iterowania (plik ustawiony DOMYSLNIE na growing=1, max 1000 iteracji; UWAGA-kolumny: pierwsza:pacFrac[dowolna], druga:pressure[.3])
+startMinPacFrac		=1.05;	//wartosc pacFrac, (startowe V przy growing=1)
 startMaxPacFrac		=1.1000;	//wartosc pacFrac, (startowe V przy growing=0)
-minArg			=1.2500;	//najmniejsze badane cisnienie (startArg przy growing=1)
+minArg			=10.0000;	//najmniejsze badane cisnienie (startArg przy growing=1)
 maxArg			=10.0000;	//najwieksze badane cisnienie (startArg przy growing=0)
 multiplyArgument	=1;		//0-argument dodawany (interwaly), 1-argument mnozony (czynnik ponizej)
 multiplyFactor		=1.01010101010101;	//gdy multiplyArgument=1, factor zwiekszania argumentu (>1)
