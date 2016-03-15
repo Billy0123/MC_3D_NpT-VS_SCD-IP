@@ -59,7 +59,7 @@ public class getmissingjobs {
                 int minJobID = maxJobID;
                 if (actualFolderList!=null) for (int k=0;k<actualFolderList.length;k++) 
                     if (actualFolderList[k].contains(pressureList[G.equals("1")?j:(pressureList.length-1-j)])) 
-                        if (actualFolderList[k].contains("Configurations") && !actualFolderList[k].endsWith("Results.txt")) 
+                        if (actualFolderList[k].contains("Configurations") && !actualFolderList[k].endsWith("Results.txt") && !actualFolderList[k].endsWith("transient.txt")) 
                             try{minJobID = Math.min(minJobID,Integer.parseInt(actualFolderList[k].substring(2).split("_")[0]));}catch(Exception e1){}
                 saveJobIDs.write(String.valueOf(minJobID+startPreviousIteration)); saveJobIDs.newLine();
             }

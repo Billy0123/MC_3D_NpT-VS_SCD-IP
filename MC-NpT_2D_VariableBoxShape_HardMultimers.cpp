@@ -12,12 +12,12 @@ int N,gaps,activeN,loadedConfiguration,loadType=0,loadedSetStartGenerator,loaded
     growing,multimerN,countCollidingPairs,ODFLength,OCFMode,skipFirstIteration,saveConfigurations,
     useSpecificDirectory,useFileToIterate,fileIterateIterationsNumber=0,actIteration=0,multiplyArgument,
     onlyMath[2]={0,0};
-long cyclesOfEquilibration,cyclesOfMeasurement,timeEq=0,timeMe=0,timeMath=0,intervalSampling,intervalOutput,intervalResults,intervalOrientations,savedConfigurationsInt;
+long cyclesOfEquilibration,cyclesOfMeasurement,timeEq=0,timeMe=0,timeMath=0,intervalSampling,intervalOutput,intervalResults,intervalOrientations,savedConfigurationsInt,generatorStartPoint=0;
 double maxDeltaR,desiredAcceptanceRatioR,desiredAcceptanceRatioV,
        startMinPacFrac,startMaxPacFrac,minArg,maxArg,loadedArg,
        intervalMin[10],intervalMax[10],intervalDelta[10],
        startArg,deltaR,deltaPhi,deltaV=0.1, //*sigma(=1)
-       multimerS,multimerD,randomStartStep[2],normalizingDenominator,
+       multimerS,multimerD,randomStartStep[2],detBoxMatrix,
        neighRadius,neighRadius2,neighRadiusMod,neighSafeDistance,multiplyFactor,pressureRealOfNotFluid,
        iterationTable[1000][2],pi=3.1415926535898;
 double L,C,ROkreguOpisanego,absoluteMinimum,absoluteMinimum2,minDistance,maxDistance,VcpPerParticle;
@@ -284,19 +284,22 @@ int createRandomGaps (particle *particles, double boxMatrix[2][2]) {
     }
 }
 
-int initPositions (particle *particles, double boxMatrix[2][2], double matrixOfParticlesSize[2], double rowShift, double initPeriodicImageMinDistance, double startAngleInRows[2]) {
-    double mod=sqrt(N/matrixOfParticlesSize[0]/matrixOfParticlesSize[1]), interval[2], actualPosition[2]={0,0};
-    for (int i=0;i<2;i++) interval[i]=boxMatrix[i][i]/matrixOfParticlesSize[i]/mod;
-    int rowCounter=0;
+int initPositions (particle *particles, double boxMatrix[2][2], double matrixOfParticlesSize[2], double rowShift, double startAngleInRows[2]) {
+    double mod=sqrt(N/matrixOfParticlesSize[0]/matrixOfParticlesSize[1]), interval[2][2], actualPosition[2]={0,0};
+    for (int i=0;i<2;i++) for (int j=0;j<2;j++) interval[i][j]=boxMatrix[i][j]/matrixOfParticlesSize[j]/mod;
+    int rowCounter=0, columnCounter=0;
     for (int i=0;i<N;i++) {
         for (int j=0;j<2;j++) particles[i].r[j]=actualPosition[j];
-        particles[i].normR[0]=(-boxMatrix[1][1]*particles[i].r[0]+boxMatrix[1][0]*particles[i].r[1])/normalizingDenominator;
-        particles[i].normR[1]=(boxMatrix[1][0]*particles[i].r[0]-boxMatrix[0][0]*particles[i].r[1])/normalizingDenominator;
+        particles[i].normR[0]=(boxMatrix[1][1]*particles[i].r[0]-boxMatrix[0][1]*particles[i].r[1])/detBoxMatrix;
+        particles[i].normR[1]=-(boxMatrix[1][0]*particles[i].r[0]-boxMatrix[0][0]*particles[i].r[1])/detBoxMatrix;
         particles[i].phi=startAngleInRows[rowCounter%2];
-        actualPosition[0]+=interval[0];
-        if ((rowCounter%2)*rowShift-actualPosition[0]+boxMatrix[0][0]<initPeriodicImageMinDistance) {  //sprawdzenie czy kolejna wstawiona cząstka nie przekryje swojego obrazu periodycznego
+        for (int j=0;j<2;j++) actualPosition[j]+=interval[j][0];
+
+        columnCounter++;
+        if (columnCounter>=matrixOfParticlesSize[0]*mod) {
             actualPosition[0]=(++rowCounter%2)*rowShift;
-            actualPosition[1]+=interval[1];
+            actualPosition[1]=interval[1][1]*rowCounter;
+            columnCounter=0;
         }
     }
     if (gaps>0) return createRandomGaps(particles,boxMatrix);
@@ -335,7 +338,7 @@ void adjustAngles (particle *particles, double boxMatrix[2][2]) {
                 if (energy==1) {
                     collidingPairs++;
                     for (int k=0;k<activeN;k++) {
-                        particles[k].phi+=0.000001;
+                        particles[k].phi+=0.00001;
                     }
                     i=activeN; j=activeN; break;
                 }
@@ -439,8 +442,8 @@ int attemptToDisplaceAParticle (particle *particles, int index, double boxMatrix
            oldPhi=particles[index].phi;
     //int oldCell[2]={particles[index].cell[0],particles[index].cell[1]}; //matrix 5/16
     for (int i=0;i<2;i++) particles[index].r[i]+=(MTGenerate(randomStartStep)%1000000/1000000.0-0.5)*deltaR;
-    particles[index].normR[0]=(-boxMatrix[1][1]*particles[index].r[0]+boxMatrix[1][0]*particles[index].r[1])/normalizingDenominator;
-    particles[index].normR[1]=(boxMatrix[1][0]*particles[index].r[0]-boxMatrix[0][0]*particles[index].r[1])/normalizingDenominator;
+    particles[index].normR[0]=(boxMatrix[1][1]*particles[index].r[0]-boxMatrix[0][1]*particles[index].r[1])/detBoxMatrix;
+    particles[index].normR[1]=-(boxMatrix[1][0]*particles[index].r[0]-boxMatrix[0][0]*particles[index].r[1])/detBoxMatrix;
     particles[index].phi+=(MTGenerate(randomStartStep)%1000000/1000000.0-0.5)*deltaPhi;
     //checkSinglePeriodicBoundaryConditions(&particles[index],boxMatrix); //matrix 6/16
     //for (int i=0;i<2;i++) particles[index].cell[i]=(int)(particles[index].normR[i]*bCSize[i]); //matrix 7/16
@@ -473,14 +476,14 @@ int attemptToChangeVolume (particle *particles, double pressure, double boxMatri
         /*for (int i=0;i<2;i++) for (int j=0;j<2;j++) lnNewBoxMatrix[i][j]=log(boxMatrix[i][j]);
         lnNewBoxMatrix[0][0]+=(MTGenerate(randomStartStep)%1000000/1000000.0-0.5)*deltaV;
         lnNewBoxMatrix[1][1]+=(MTGenerate(randomStartStep)%1000000/1000000.0-0.5)*deltaV;
-        if (boxMatrix[1][0]==0) lnNewBoxMatrix[1][0]=-20.0+(MTGenerate(randomStartStep)%1000000/1000000.0-0.5)*deltaV; //log(0) -> -\infty; E^~0 za duze jak na start
-        else lnNewBoxMatrix[1][0]+=(MTGenerate(randomStartStep)%1000000/1000000.0-0.5)*deltaV;
-        lnNewBoxMatrix[0][1]=lnNewBoxMatrix[1][0];
+        if (boxMatrix[0][1]==0) lnNewBoxMatrix[0][1]=-20.0+(MTGenerate(randomStartStep)%1000000/1000000.0-0.5)*deltaV; //log(0) -> -\infty; E^~0 za duze jak na start
+        else lnNewBoxMatrix[0][1]+=(MTGenerate(randomStartStep)%1000000/1000000.0-0.5)*deltaV;
+        lnNewBoxMatrix[1][0]=lnNewBoxMatrix[0][1];
         for (int i=0;i<2;i++) for (int j=0;j<2;j++) newBoxMatrix[i][j]=exp(lnNewBoxMatrix[i][j]);*/
         newBoxMatrix[0][0]=boxMatrix[0][0]+(MTGenerate(randomStartStep)%1000000/1000000.0-0.5)*deltaV;
         newBoxMatrix[1][1]=boxMatrix[1][1]+(MTGenerate(randomStartStep)%1000000/1000000.0-0.5)*deltaV;
-        newBoxMatrix[1][0]=boxMatrix[1][0]+(MTGenerate(randomStartStep)%1000000/1000000.0-0.5)*deltaV;
-        newBoxMatrix[0][1]=newBoxMatrix[1][0];
+        newBoxMatrix[0][1]=boxMatrix[0][1]+(MTGenerate(randomStartStep)%1000000/1000000.0-0.5)*deltaV;
+        newBoxMatrix[1][0]=newBoxMatrix[0][1];
     } else {    //NIEdozwolone zmiany ksztaltu pudla (faza plynu)
         /*lnNewBoxMatrix[0][0]=log(boxMatrix[0][0])+(MTGenerate(randomStartStep)%1000000/1000000.0-0.5)*deltaV;
         newBoxMatrix[0][0]=exp(lnNewBoxMatrix[0][0]);*/
@@ -489,12 +492,13 @@ int attemptToChangeVolume (particle *particles, double pressure, double boxMatri
         newBoxMatrix[1][1]=boxMatrix[1][1]/boxMatrix[0][0]*newBoxMatrix[0][0];
         newBoxMatrix[0][1]=boxMatrix[0][1]; newBoxMatrix[1][0]=boxMatrix[1][0];
     }
-    double newVolume=fabs(-pow(newBoxMatrix[1][0],2)+newBoxMatrix[0][0]*newBoxMatrix[1][1]);
+    double newDetBoxMatrix=newBoxMatrix[0][0]*newBoxMatrix[1][1]-newBoxMatrix[1][0]*newBoxMatrix[0][1],
+           newVolume=fabs(newDetBoxMatrix);
 
     double bufferR[activeN][2];
     for (int i=0;i<activeN;i++) {
-        bufferR[i][0]=newBoxMatrix[0][0]*particles[i].normR[0]+newBoxMatrix[1][0]*particles[i].normR[1];
-        bufferR[i][1]=newBoxMatrix[0][1]*particles[i].normR[0]+newBoxMatrix[1][1]*particles[i].normR[1];
+        bufferR[i][0]=newBoxMatrix[0][0]*particles[i].normR[0]+newBoxMatrix[0][1]*particles[i].normR[1];
+        bufferR[i][1]=newBoxMatrix[1][0]*particles[i].normR[0]+newBoxMatrix[1][1]*particles[i].normR[1];
     }
 
     //matrix 11/16
@@ -579,7 +583,7 @@ int attemptToChangeVolume (particle *particles, double pressure, double boxMatri
             *volume=newVolume;
             for (int i=0;i<2;i++) for (int j=0;j<2;j++) boxMatrix[i][j]=newBoxMatrix[i][j];
             for (int i=0;i<activeN;i++) for (int j=0;j<2;j++) particles[i].r[j]=bufferR[i][j];
-            normalizingDenominator=pow(boxMatrix[1][0],2)-boxMatrix[0][0]*boxMatrix[1][1];
+            detBoxMatrix=newDetBoxMatrix;
         }
     }
 
@@ -780,7 +784,7 @@ int main(int argumentsNumber, char **arguments) {
                     useSpecificDirectory=strtol(arguments[11],NULL,10);
                 } else correctNumberOfArguments=0; break;
             case 2: //ustaw JOBID, run z najistotniejszymi parametrami z 'config.txt' nadpisanymi z poziomu wywolania
-                if (argumentsNumber==12) {
+                if (argumentsNumber==13) {
                     if (useFileToIterate) if(createIterationTable()) return 0;
                     strncat(JOBID,arguments[2],50);
                     N=strtol(arguments[3],NULL,10);
@@ -792,6 +796,7 @@ int main(int argumentsNumber, char **arguments) {
                     useSpecificDirectory=strtol(arguments[9],NULL,10);
                     skipFirstIteration=strtol(arguments[10],NULL,10);
                     pointNumber=strtol(arguments[11],NULL,10);
+                    generatorStartPoint=strtol(arguments[12],NULL,10);
                 } else correctNumberOfArguments=0; break;
             case 3: //ustaw JOBID, tryb loadowany #1 od zadanego argumentu w odpowiednim folderze i trybie
                 if (argumentsNumber==13) {
@@ -851,7 +856,7 @@ int main(int argumentsNumber, char **arguments) {
             printf("Wrong number of arguments for this type of run!\n");
             printf("If type of run is '0', next arguments: $JOBID\n");
             printf("If type of run is '1', next arguments: $JOBID, startMinPacFrac, minArg, N, gaps, multimerS, multimerD, growing, iterationsNumber, useSpecificDirectory\n");
-            printf("If type of run is '2', next arguments: $JOBID, N, gaps, multimerS, multimerD, growing, iterationsNumber, useSpecificDirectory, skipFirstIteration, pointNumber\n");
+            printf("If type of run is '2', next arguments: $JOBID, N, gaps, multimerS, multimerD, growing, iterationsNumber, useSpecificDirectory, skipFirstIteration, pointNumber, generatorStartPoint\n");
             printf("If type of run is '3', next arguments: $JOBID, JOBID of configuration to load, N, gaps, multimerS, multimerD, growing, loadedArg, iterationsNumber, useSpecificDirectory, skipFirstIteration\n");
             printf("If type of run is '4', next arguments: $JOBID, JOBID of configuration to load, N, gaps, multimerS, multimerD, growing, pointNumber, iterationsNumber, useSpecificDirectory, skipFirstIteration\n");
             printf("If type of run is '5', next arguments: $JOBID, lines to skip from Results, N, gaps, multimerS, multimerD, growing, pointNumber, iterationsNumber, useSpecificDirectory\n");
@@ -930,8 +935,8 @@ int main(int argumentsNumber, char **arguments) {
     FILE *fileResults, *fileExcelResults, *fileConfigurations, *fileSavedConfigurations, *fileOrientations, *fileOrientatCorrelFun, *fileConfigurationsList, *fileAllResults, *fileAllOrientations, *fileOrientationsResults, *fileAllOrientationsResults;
     fileResults = fopen(resultsFileName,"rt"); if (fileResults==NULL) {
         fileResults = fopen(resultsFileName,"a");
-        if (saveConfigurations) fprintf(fileResults,"Cycles\tPressureReduced\tVolume\tBoxMatrix[0][0]\tBoxMatrix[1][1]\tBoxMatrix[1][0]([0][1])\tRho\tV/V_cp\tS1111\tdS1111\tS1122\tdS1122\tS1212\tdS1212\tS2222\tdS2222\tavNu\tdAvNu\tavB\tdAvB\tavMy\tdAvMy\tavE\tdAvE\tODFMax_One\t<cos(6Phi)>_One\tODFMax_All\t<cos(6Phi)>_All\tdPhiCyclesInterval\tavAbsDPhi\n");
-        else fprintf(fileResults,"Cycles\tPressureReduced\tVolume\tBoxMatrix[0][0]\tBoxMatrix[1][1]\tBoxMatrix[1][0]([0][1])\tRho\tV/V_cp\tS1111\tdS1111\tS1122\tdS1122\tS1212\tdS1212\tS2222\tdS2222\tavNu\tdAvNu\tavB\tdAvB\tavMy\tdAvMy\tavE\tdAvE\tODFMax_One\t<cos(6Phi)>_One\tODFMax_All\t<cos(6Phi)>_All\n");
+        if (saveConfigurations) fprintf(fileResults,"Cycles\tPressureReduced\tVolume\tBoxMatrix[0][0]\tBoxMatrix[1][1]\tBoxMatrix[1][0]([0][1])\tRho\tV/V_cp\tS1111\tdS1111\tS1122\tdS1122\tS1212\tdS1212\tS2222\tdS2222\tS1112\tdS1112\tS1222\tdS1222\tavNu\tdAvNu\tavB\tdAvB\tavMy\tdAvMy\tavE\tdAvE\tODFMax_One\t<cos(6Phi)>_One\tODFMax_All\t<cos(6Phi)>_All\tdPhiCyclesInterval\tavAbsDPhi\n");
+        else fprintf(fileResults,"Cycles\tPressureReduced\tVolume\tBoxMatrix[0][0]\tBoxMatrix[1][1]\tBoxMatrix[1][0]([0][1])\tRho\tV/V_cp\tS1111\tdS1111\tS1122\tdS1122\tS1212\tdS1212\tS2222\tdS2222\tS1112\tdS1112\tS1222\tdS1222\tavNu\tdAvNu\tavB\tdAvB\tavMy\tdAvMy\tavE\tdAvE\tODFMax_One\t<cos(6Phi)>_One\tODFMax_All\t<cos(6Phi)>_All\n");
         fclose(fileResults);
     }
     fileExcelResults = fopen(excelResultsFileName,"rt"); if (fileExcelResults==NULL) {
@@ -950,14 +955,14 @@ int main(int argumentsNumber, char **arguments) {
     while (growing>=0) {
         double pressureReduced=arg, pressureReal=pressureReduced/multimerS/multimerS, //pressureReduced=\tau*\sigma^2/(kT), kT=1
                volume=(startArg==arg)?(growing?N/(1.0/VcpPerParticle/startMinPacFrac):N/(1.0/VcpPerParticle/startMaxPacFrac)):oldVolume, rho=N/volume, pacFrac=1.0/VcpPerParticle/rho,
-               boxMatrix[2][2],unitCellAtCP[2],initRowShift,initPeriodicImageMinDistance,startAngleInRows[2],matrixOfParticlesSize[2];
+               boxMatrix[2][2],unitCellAtCP[2],initRowShift,startAngleInRows[2],matrixOfParticlesSize[2];
         if (multimerN==6) {
             unitCellAtCP[0]=minDistance; unitCellAtCP[1]=sqrt(3)/2.0*minDistance;
-            initRowShift=unitCellAtCP[0]*sqrt(pacFrac)/2.0; initPeriodicImageMinDistance=minDistance;
+            initRowShift=unitCellAtCP[0]*sqrt(pacFrac)/2.0;
             startAngleInRows[0]=absoluteMinimum2; startAngleInRows[1]=absoluteMinimum2;
         } else if (multimerN==5) {
             unitCellAtCP[0]=2.40487*multimerD; unitCellAtCP[1]=2.11804*multimerD;
-            initRowShift=1.39176*multimerD; initPeriodicImageMinDistance=getMinimalDistanceAnalyticalMethodForOddHCM(0,0);
+            initRowShift=1.39176*multimerD;
             startAngleInRows[0]=0; startAngleInRows[1]=C;
         }
         if (N%56==0) {matrixOfParticlesSize[0]=7; matrixOfParticlesSize[1]=8;}
@@ -967,12 +972,12 @@ int main(int argumentsNumber, char **arguments) {
             for (int i=0;i<2;i++) boxMatrix[i][i]=matrixOfParticlesSize[i]*unitCellAtCP[i]*sqrt(pacFrac)*NLinearMod;
             boxMatrix[1][0]=0.0; boxMatrix[0][1]=0.0;
         } else for (int i=0;i<2;i++) for (int j=0;j<2;j++) boxMatrix[i][j]=oldBoxMatrix[i][j];
-        normalizingDenominator=pow(boxMatrix[1][0],2)-boxMatrix[0][0]*boxMatrix[1][1];
+        detBoxMatrix=boxMatrix[0][0]*boxMatrix[1][1]-boxMatrix[1][0]*boxMatrix[0][1];
 
         if (!onlyMath[0]) {
             if (arg==startArg && !loadedConfiguration) {
                 printf("INIT POS.- N: %d, gaps: %d, growing: %d, StartPressRed: %.4f (StartDen: %.4f, startPacFrac: %.4f), mN: %d, mS: %.2f, mD: %.6f\n",N,gaps,growing,startArg,rho,pacFrac,multimerN,multimerS,multimerD);
-                if (!initPositions(particles,boxMatrix,matrixOfParticlesSize,initRowShift,initPeriodicImageMinDistance,startAngleInRows)) return 0;
+                if (!initPositions(particles,boxMatrix,matrixOfParticlesSize,initRowShift,startAngleInRows)) return 0;
                 adjustAngles(particles,boxMatrix);
                 updateNeighbourList(particles,boxMatrix); //matrix(comment) 12/16
             } else if (loadedConfiguration) {
@@ -1003,7 +1008,7 @@ int main(int argumentsNumber, char **arguments) {
                 arg=arg4; pressureReduced=arg; pressureReal=pressureReduced/multimerS/multimerS;
                 rho=arg3; pacFrac=1.0/VcpPerParticle/rho; volume=N/rho;
 
-                normalizingDenominator=pow(boxMatrix[1][0],2)-boxMatrix[0][0]*boxMatrix[1][1];
+                detBoxMatrix=boxMatrix[0][0]*boxMatrix[1][1]-boxMatrix[1][0]*boxMatrix[0][1];
                 int actIndex=0;
                 while (configurations[actIndex]!='{') actIndex++;
                 actIndex+=3;
@@ -1021,8 +1026,8 @@ int main(int argumentsNumber, char **arguments) {
                             particles[i].phi=strtod(coordinate,NULL);
                         }
                     }
-                    particles[i].normR[0]=(-boxMatrix[1][1]*particles[i].r[0]+boxMatrix[1][0]*particles[i].r[1])/normalizingDenominator;
-                    particles[i].normR[1]=(boxMatrix[1][0]*particles[i].r[0]-boxMatrix[0][0]*particles[i].r[1])/normalizingDenominator;
+                    particles[i].normR[0]=(boxMatrix[1][1]*particles[i].r[0]-boxMatrix[0][1]*particles[i].r[1])/detBoxMatrix;
+                    particles[i].normR[1]=-(boxMatrix[1][0]*particles[i].r[0]-boxMatrix[0][0]*particles[i].r[1])/detBoxMatrix;
                 }
                 printf("LOADING POS.- N: %d, gaps: %d, growing: %d, StartPressRed: %.4f (startDen: %.4f, startPacFrac: %.4f), RandStart: %.1f, RandStep: %.1f, Cycles: %ld, DeltaR: %.4f, DeltaV: %.4f\n",N,gaps,growing,arg4,arg3,pacFrac,arg1,arg2,arg5,arg9,arg10);
                 //for (int i=0;i<2;i++) for (int j=0;j<2;j++) printf("boxMatrix[%d][%d]=%.12f\n",i,j,boxMatrix[i][j]);
@@ -1051,8 +1056,12 @@ int main(int argumentsNumber, char **arguments) {
                         for (double i=0;i<arg2;i++) MTGenerate(randomStartStep);
                     } else printf("Setting p-random number generator to last position from file - DISABLED\n");
                 } else {
-                    printf("Setting start position of p-random number generator to actual CPU time...\n");
-                    randomStartStep[0]=InitRandomMT();
+                    if (generatorStartPoint==0) {
+                        generatorStartPoint=time(0);
+                        printf("Setting start position of p-random number generator to actual CPU time...\n");
+                    } else printf("Setting start position of p-random number generator to %ld...\n",generatorStartPoint);
+                    InitMT((unsigned int)generatorStartPoint);
+                    randomStartStep[0]=generatorStartPoint;
                     randomStartStep[1]=0;
                 }
                 printf("Start of equilibration at reduced pressure: %.4f (startDen: %.4f, startPacFrac: %.4f)... (%ld cycles)\n",pressureReduced,rho,pacFrac,cyclesOfEquilibration);
@@ -1170,7 +1179,7 @@ int main(int argumentsNumber, char **arguments) {
                             else printf("Cycle: %ld\n",(cycle+arg5));
                             printf("   AccRatR: %.4f, dR: %.4f, AccRatV: %.4f, dV: %.4f\n",acceptanceRatioR,deltaR,acceptanceRatioV,deltaV);
                             printf("   Dens: %.4f, V/V_cp: %.4f, PressRed: %.4f\n",rho,pacFrac,pressureReduced);
-                            printf("   box00: %.8f, box11: %.8f, box10(01): %.8f\n",boxMatrix[0][0],boxMatrix[1][1],boxMatrix[1][0]);
+                            printf("   box00: %.8f, box11: %.8f, box01(10): %.8f\n",boxMatrix[0][0],boxMatrix[1][1],boxMatrix[0][1]);
                         }*/
                         /////
 
@@ -1209,7 +1218,7 @@ int main(int argumentsNumber, char **arguments) {
 
                             rho=N/volume; pacFrac=1.0/VcpPerParticle/rho;
                             if (cycle%intervalResults==0)
-                                fprintf(fileAllResults,"%ld\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t\n",(cycle+arg5),volume,boxMatrix[0][0],boxMatrix[1][1],boxMatrix[1][0],rho,pacFrac);
+                                fprintf(fileAllResults,"%ld\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t\n",(cycle+arg5),volume,boxMatrix[0][0],boxMatrix[1][1],boxMatrix[0][1],rho,pacFrac);
 
                             if (cycle%intervalOrientations==0) {
                                 /////skan po konkretnej cząstce (np. dla 224: 14*(16/2)-(14/2)=105, etc.) - w srodku by nie skakala na granicy pudla periodycznego; bezposrednie uzycie w Mathematice (format tablicy)
@@ -1250,7 +1259,7 @@ int main(int argumentsNumber, char **arguments) {
                             }
 
                             if (saveConfigurations && cycle%savedConfigurationsInt==0) {
-                                fprintf(fileSavedConfigurations,"%ld\t%.12f\t%.12f\t%.12f\t{",(cycle+arg5),boxMatrix[0][0],boxMatrix[1][1],boxMatrix[1][0]);
+                                fprintf(fileSavedConfigurations,"%ld\t%.12f\t%.12f\t%.12f\t{",(cycle+arg5),boxMatrix[0][0],boxMatrix[1][1],boxMatrix[0][1]);
                                 int activeNMinus1=activeN-1;
                                 for (int i=0;i<activeNMinus1;i++)
                                     fprintf(fileSavedConfigurations,"m[%.17f,%.17f,%.17f],",particles[i].r[0],particles[i].r[1],particles[i].phi);
@@ -1263,7 +1272,7 @@ int main(int argumentsNumber, char **arguments) {
                                 else printf("Cycle: %ld\n",(cycle+arg5));
                                 printf("   AccRatR: %.4f, dR: %.4f, AccRatV: %.4f, dV: %.4f\n",acceptanceRatioR,deltaR,acceptanceRatioV,deltaV);
                                 printf("   Dens: %.4f, V/V_cp: %.4f, PressRed: %.4f\n",rho,pacFrac,pressureReduced);
-                                printf("   box00: %.8f, box11: %.8f, box10(01): %.8f\n",boxMatrix[0][0],boxMatrix[1][1],boxMatrix[1][0]);
+                                printf("   box00: %.8f, box11: %.8f, box01(10): %.8f\n",boxMatrix[0][0],boxMatrix[1][1],boxMatrix[0][1]);
 
                                 fileConfigurations = fopen(bufferConfigurations,"w");
                                 fprintf(fileConfigurations,"Rho: %.12f\tV/V_cp: %.12f\tPressureRed: %.12f\tRandStart: %.1f\tRandSteps: %.1f\tCycles: %ld\tEquilTime: %ldsec\tMeasuTime: %ldsec\n\n",rho,pacFrac,
@@ -1273,15 +1282,15 @@ int main(int argumentsNumber, char **arguments) {
                                 for (int i=0;i<activeN;i++)
                                     fprintf(fileConfigurations,"m[%.17f,%.17f,%.17f,%.12f,%.12f,%d],",particles[i].r[0],particles[i].r[1],particles[i].phi,multimerS,multimerD,multimerN);
                                 fprintf(fileConfigurations,"{Opacity[0.2],Red,Polygon[{{0,0},{%.12f,%.12f},{%.12f,%.12f},{%.12f,%.12f}}]},{Opacity[0.2],Green,Disk[{%.12f,%.12f},%.12f]}}",boxMatrix[0][0],boxMatrix[1][0],boxMatrix[0][0]+boxMatrix[0][1],boxMatrix[1][0]+boxMatrix[1][1],boxMatrix[0][1],boxMatrix[1][1],particles[indexScanned].r[0],particles[indexScanned].r[1],neighRadius);
-                                fprintf(fileConfigurations,"\n==========================================\n\n\nboxMatrix[0][0]=%.12f, boxMatrix[1][1]=%.12f, boxMatrix[1][0]=boxMatrix[0][1]=%.12f",boxMatrix[0][0],boxMatrix[1][1],boxMatrix[1][0]);
+                                fprintf(fileConfigurations,"\n==========================================\n\n\nboxMatrix[0][0]=%.12f, boxMatrix[1][1]=%.12f, boxMatrix[0][1]=boxMatrix[1][0]=%.12f",boxMatrix[0][0],boxMatrix[1][1],boxMatrix[0][1]);
                                 fclose(fileConfigurations);
                             }
-                        } else {
+                        }// else {//dostosowywanie delt w trakcie pomiaru
                             if (acceptanceRatioR>desiredAcceptanceRatioR) deltaR*=1.05; else deltaR*=0.95;
                             if (deltaR>maxDeltaR) deltaR=maxDeltaR;
                             deltaPhi=deltaR*2.0*sin(C);
                             if (acceptanceRatioV>desiredAcceptanceRatioV) deltaV*=1.05; else deltaV*=0.95;
-                        }
+                        //}
                         attemptedNumberR=0; displacedNumberR=0;
                         attemptedNumberV=0; displacedNumberV=0;
                     }
@@ -1302,7 +1311,7 @@ int main(int argumentsNumber, char **arguments) {
             printf("Start of calculation of results...\n");
 
             //obliczenie srednich wartosci mierzonych wielkosci
-            printf("Calculation of averages... ");
+            printf("Calculation of averages... "); fflush(stdout);
             double avVolume=0, avBoxMatrix[3]={0,0,0}, avRho=0, avPacFrac=0;
             fileAllResults=fopen(allResultsFileName,"rt");
             char linia[activeN*17];
@@ -1333,7 +1342,7 @@ int main(int argumentsNumber, char **arguments) {
             printf("done\n");
 
             //obliczenie bledu objetosci (dV)
-            printf("Calculation of dV... ");
+            printf("Calculation of dV... "); fflush(stdout);
             double dAvVolume = 0;
             fileAllResults=fopen(allResultsFileName,"rt");
             if (onlyMath[0]) for (int i=0;i<onlyMath[1];i++) fgets(linia,300,fileAllResults);
@@ -1354,8 +1363,8 @@ int main(int argumentsNumber, char **arguments) {
             printf("done\n");
 
             //obliczenie srednich iloczynow elementow tensora odkształceń
-            printf("Calculation of average values of products of strain tensor's elements... ");
-            double e1111=0, e1122=0, e1212=0, e2222=0,
+            printf("Calculation of average values of products of strain tensor's elements... "); fflush(stdout);
+            double e1111=0, e1122=0, e1212=0, e2222=0, e1112=0, e1222=0,
                    HxyHyx=avBoxMatrix[2]*avBoxMatrix[2],
                    HxxHyy=avBoxMatrix[0]*avBoxMatrix[1],
                    HxxHxy=avBoxMatrix[0]*avBoxMatrix[2],
@@ -1396,16 +1405,19 @@ int main(int argumentsNumber, char **arguments) {
                     e1122+=e11*e22;
                     e1212+=e12*e12;
                     e2222+=e22*e22;
+                    e1112+=e11*e12;
+                    e1222+=e12*e22;
                 }
             }
             fclose(fileAllResults);
             e1111/=(double)dataLicznik; e1122/=(double)dataLicznik;
             e1212/=(double)dataLicznik; e2222/=(double)dataLicznik;
+            e1112/=(double)dataLicznik; e1222/=(double)dataLicznik;
             printf("done\n");
 
             //obliczenie bledow iloczynow elementow tensora odksztalcen
-            printf("Calculation of errors of average values of products of strain tensor's elements... ");
-            double dE1111=0, dE1122=0, dE1212=0, dE2222=0;
+            printf("Calculation of errors of average values of products of strain tensor's elements... "); fflush(stdout);
+            double dE1111=0, dE1122=0, dE1212=0, dE2222=0, dE1112=0, dE1222=0;
             fileAllResults=fopen(allResultsFileName,"rt");
             if (onlyMath[0]) for (int i=0;i<onlyMath[1];i++) fgets(linia,300,fileAllResults);
             while(fgets(linia,300,fileAllResults)!=NULL) {
@@ -1439,19 +1451,24 @@ int main(int argumentsNumber, char **arguments) {
                     epsilon=e1122-e11*e22; dE1122+=epsilon*epsilon;
                     epsilon=e1212-e12*e12; dE1212+=epsilon*epsilon;
                     epsilon=e2222-e22*e22; dE2222+=epsilon*epsilon;
+                    epsilon=e1112-e11*e12; dE1112+=epsilon*epsilon;
+                    epsilon=e1222-e12*e22; dE1222+=epsilon*epsilon;
                 }
             }
             fclose(fileAllResults);
             dE1111=getAvErrorFromSumEps(dE1111,denominator); dE1122=getAvErrorFromSumEps(dE1122,denominator);
             dE1212=getAvErrorFromSumEps(dE1212,denominator); dE2222=getAvErrorFromSumEps(dE2222,denominator);
+            dE1112=getAvErrorFromSumEps(dE1112,denominator); dE1222=getAvErrorFromSumEps(dE1222,denominator);
             printf("done\n");
 
             //obliczenie podatnosci, wspolczynnika Poissona i modulow sprezystosci
-            printf("Calculation of compliances, Poisson's ratio and elastic moduli... ");
+            printf("Calculation of compliances, Poisson's ratio and elastic moduli... "); fflush(stdout);
             double s1111=e1111*avVolume, dS1111=fabs(e1111*dAvVolume)+fabs(dE1111*avVolume),
                    s1122=e1122*avVolume, dS1122=fabs(e1122*dAvVolume)+fabs(dE1122*avVolume),
                    s1212=e1212*avVolume, dS1212=fabs(e1212*dAvVolume)+fabs(dE1212*avVolume),
                    s2222=e2222*avVolume, dS2222=fabs(e2222*dAvVolume)+fabs(dE2222*avVolume),
+                   s1112=e1112*avVolume, dS1112=fabs(e1112*dAvVolume)+fabs(dE1112*avVolume),
+                   s1222=e1222*avVolume, dS1222=fabs(e1222*dAvVolume)+fabs(dE1222*avVolume),
 
                    nu2211_1111=-s1122/s1111, dNu2211_1111=fabs(dS1122/s1111)+fabs(dS1111*s1122/s1111/s1111),
                    nu1122_2222=-s1122/s2222, dNu1122_2222=fabs(dS1122/s2222)+fabs(dS2222*s1122/s2222/s2222),
@@ -1473,7 +1490,7 @@ int main(int argumentsNumber, char **arguments) {
             printf("done\n");
 
             //tworzenie pliku wynikowego do Origina - rozklad orientacyjny dla 1 czastki
-            printf("Creation of 1-particle orientation file for Origin... ");
+            printf("Creation of 1-particle orientation file for Origin... "); fflush(stdout);
             double componentCounter=0, averageCos6PhiOne=0, ODFMaxOne=0;
             fileOrientations=fopen(bufferOrientations,"rt");
             double ODF_1P[ODFLength]; for (int i=0;i<ODFLength;i++) ODF_1P[i]=0; //Orientational Distribution Function (1 Particle)
@@ -1504,7 +1521,7 @@ int main(int argumentsNumber, char **arguments) {
             printf("done\n");
 
             //tworzenie pliku wynikowego do Origina - rozklad orientacyjny dla wszystkich czastek
-            printf("Creation of ALL-particle orientation file for Origin... ");
+            printf("Creation of ALL-particle orientation file for Origin... "); fflush(stdout);
             componentCounter=0; double averageCos6PhiAll=0, ODFMaxAll=0;
             fileAllOrientations = fopen(allOrientationsFileName,"rt");
             double ODF_AllP[ODFLength]; for (int i=0;i<ODFLength;i++) ODF_AllP[i]=0; //Orientational Distribution Function (All Particles)
@@ -1528,7 +1545,7 @@ int main(int argumentsNumber, char **arguments) {
             //analiza konfiguracji przejsciowych (dPhi z konfiguracji na konfiguracje)
             double avAbsDPhi=0;
             if (saveConfigurations) {
-                printf("Transient configurations analysis... ");
+                printf("Transient configurations analysis... "); fflush(stdout);
                 fileSavedConfigurations = fopen(bufferSavedConfigurations,"rt");
                 char configurations[activeN*70+100];
                 double prevCfg[activeN][3]; bool undefinedPrevCfg=true;
@@ -1571,7 +1588,7 @@ int main(int argumentsNumber, char **arguments) {
 
 /////////////////////////////////////////////// ZAPIS DANYCH DO PLIKU
 
-            printf("Saving data to files... ");
+            printf("Saving data to files... "); fflush(stdout);
             timeEq+=(timeEquilibration-timeStart); timeMe+=(timeEnd-timeEquilibration); timeMath+=(timeEndMath-timeEnd);
 
             fileResults = fopen(resultsFileName,"a");
@@ -1584,10 +1601,10 @@ int main(int argumentsNumber, char **arguments) {
             fileAllOrientationsResults = fopen(allOrientationsResultsFileName,"w");
 
             if (saveConfigurations) {
-                fprintf(fileResults,"%ld\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%ld\t%.12f\n",(cycle+arg5),pressureReduced,avVolume,avBoxMatrix[0],avBoxMatrix[1],avBoxMatrix[2],avRho,avPacFrac,s1111,dS1111,s1122,dS1122,s1212,dS1212,s2222,dS2222,avNu,dAvNu,avB,dAvB,avMy,dAvMy,avE,dAvE,ODFMaxOne,averageCos6PhiOne,ODFMaxAll,averageCos6PhiAll,savedConfigurationsInt,avAbsDPhi);
+                fprintf(fileResults,"%ld\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%ld\t%.12f\n",(cycle+arg5),pressureReduced,avVolume,avBoxMatrix[0],avBoxMatrix[1],avBoxMatrix[2],avRho,avPacFrac,s1111,dS1111,s1122,dS1122,s1212,dS1212,s2222,dS2222,s1112,dS1112,s1222,dS1222,avNu,dAvNu,avB,dAvB,avMy,dAvMy,avE,dAvE,ODFMaxOne,averageCos6PhiOne,ODFMaxAll,averageCos6PhiAll,savedConfigurationsInt,avAbsDPhi);
                 fprintf(fileExcelResults,"%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%ld\t%.12f\n",pressureReduced,avPacFrac,avNu,ODFMaxAll,averageCos6PhiAll,avB,avMy,avE,savedConfigurationsInt,avAbsDPhi);
             } else {
-                fprintf(fileResults,"%ld\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\n",(cycle+arg5),pressureReduced,avVolume,avBoxMatrix[0],avBoxMatrix[1],avBoxMatrix[2],avRho,avPacFrac,s1111,dS1111,s1122,dS1122,s1212,dS1212,s2222,dS2222,avNu,dAvNu,avB,dAvB,avMy,dAvMy,avE,dAvE,ODFMaxOne,averageCos6PhiOne,ODFMaxAll,averageCos6PhiAll);
+                fprintf(fileResults,"%ld\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\n",(cycle+arg5),pressureReduced,avVolume,avBoxMatrix[0],avBoxMatrix[1],avBoxMatrix[2],avRho,avPacFrac,s1111,dS1111,s1122,dS1122,s1212,dS1212,s2222,dS2222,s1112,dS1112,s1222,dS1222,avNu,dAvNu,avB,dAvB,avMy,dAvMy,avE,dAvE,ODFMaxOne,averageCos6PhiOne,ODFMaxAll,averageCos6PhiAll);
                 fprintf(fileExcelResults,"%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\n",pressureReduced,avPacFrac,avNu,ODFMaxAll,averageCos6PhiAll,avB,avMy,avE);
             }
 
@@ -1603,7 +1620,7 @@ int main(int argumentsNumber, char **arguments) {
                     fprintf(fileConfigurationsList,"m[%.12f+x,%.12f+y,%.12f,%.12f,%.12f,%d],",particles[i].r[0],particles[i].r[1],particles[i].phi,multimerS,multimerD,multimerN);
                 }
                 fprintf(fileConfigurations,"{Opacity[0.2],Red,Polygon[{{0,0},{%.12f,%.12f},{%.12f,%.12f},{%.12f,%.12f}}]},{Opacity[0.2],Green,Disk[{%.12f,%.12f},%.12f]}}",boxMatrix[0][0],boxMatrix[1][0],boxMatrix[0][0]+boxMatrix[0][1],boxMatrix[1][0]+boxMatrix[1][1],boxMatrix[0][1],boxMatrix[1][1],particles[indexScanned].r[0],particles[indexScanned].r[1],neighRadius);
-                fprintf(fileConfigurations,"\n==========================================\n\n\nboxMatrix[0][0]=%.12f, boxMatrix[1][1]=%.12f, boxMatrix[1][0]=boxMatrix[0][1]=%.12f",boxMatrix[0][0],boxMatrix[1][1],boxMatrix[1][0]);
+                fprintf(fileConfigurations,"\n==========================================\n\n\nboxMatrix[0][0]=%.12f, boxMatrix[1][1]=%.12f, boxMatrix[0][1]=boxMatrix[1][0]=%.12f",boxMatrix[0][0],boxMatrix[1][1],boxMatrix[0][1]);
                 fprintf(fileConfigurationsList,"{Opacity[If[x==0 && y==0,0.4,0]],Red,Polygon[{{0,0},{%.12f,%.12f},{%.12f,%.12f},{%.12f,%.12f}}]},{Opacity[If[x==0 && y==0,0.4,0]],Green,Disk[{%.12f,%.12f},%.12f]}};\nconfigurationsList=Append[configurationsList,g[%.12f,multimers[%.12f,%.12f,kolorIndex=1],multimers[%.12f,%.12f,kolorIndex=1],multimers[%.12f,%.12f,kolorIndex=1],multimers[0,0,kolorIndex=1]]];\n",
                         boxMatrix[0][0],boxMatrix[1][0],boxMatrix[0][0]+boxMatrix[0][1],boxMatrix[1][0]+boxMatrix[1][1],boxMatrix[0][1],boxMatrix[1][1],particles[indexScanned].r[0],particles[indexScanned].r[1],neighRadius,pacFrac,boxMatrix[0][0],boxMatrix[1][0],boxMatrix[0][0]+boxMatrix[0][1],boxMatrix[1][0]+boxMatrix[1][1],boxMatrix[0][1],boxMatrix[1][1]);
             }
@@ -1631,6 +1648,7 @@ int main(int argumentsNumber, char **arguments) {
         for (int i=0;i<2;i++) for (int j=0;j<2;j++) oldBoxMatrix[i][j]=boxMatrix[i][j];
         arg5=0;
         loadedConfiguration=0;
+        generatorStartPoint=0;
     }
     printf("\nTime for equilibrations: %ldsec ,  time for measurments: %ldsec, time for math: %ldsec.\n",timeEq,timeMe,timeMath);
     printf("\nSimulation has been completed.\n");
