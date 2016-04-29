@@ -935,14 +935,14 @@ int main(int argumentsNumber, char **arguments) {
     FILE *fileResults, *fileExcelResults, *fileConfigurations, *fileSavedConfigurations, *fileOrientations, *fileOrientatCorrelFun, *fileConfigurationsList, *fileAllResults, *fileAllOrientations, *fileOrientationsResults, *fileAllOrientationsResults;
     fileResults = fopen(resultsFileName,"rt"); if (fileResults==NULL) {
         fileResults = fopen(resultsFileName,"a");
-        if (saveConfigurations) fprintf(fileResults,"Cycles\tPressureReduced\tVolume\tBoxMatrix[0][0]\tBoxMatrix[1][1]\tBoxMatrix[1][0]([0][1])\tRho\tV/V_cp\tS1111\tdS1111\tS1122\tdS1122\tS1212\tdS1212\tS2222\tdS2222\tS1112\tdS1112\tS1222\tdS1222\tavNu\tdAvNu\tavB\tdAvB\tavMy\tdAvMy\tavE\tdAvE\tODFMax_One\t<cos(6Phi)>_One\tODFMax_All\t<cos(6Phi)>_All\tdPhiCyclesInterval\tavAbsDPhi\n");
-        else fprintf(fileResults,"Cycles\tPressureReduced\tVolume\tBoxMatrix[0][0]\tBoxMatrix[1][1]\tBoxMatrix[1][0]([0][1])\tRho\tV/V_cp\tS1111\tdS1111\tS1122\tdS1122\tS1212\tdS1212\tS2222\tdS2222\tS1112\tdS1112\tS1222\tdS1222\tavNu\tdAvNu\tavB\tdAvB\tavMy\tdAvMy\tavE\tdAvE\tODFMax_One\t<cos(6Phi)>_One\tODFMax_All\t<cos(6Phi)>_All\n");
+        if (saveConfigurations) fprintf(fileResults,"Cycles\tPressureReduced\tVolume\tBoxMatrix[0][0]\tBoxMatrix[1][1]\tBoxMatrix[1][0]([0][1])\tRho\tV/V_cp\tS1111\tdS1111\tS1122\tdS1122\tS1212\tdS1212\tS2222\tdS2222\tS1112\tdS1112\tS1222\tdS1222\tavNu\tdAvNu\tavB\tdAvB\tavMy\tdAvMy\tavE\tdAvE\tODFMax_One\t<cos(6Phi)>_One\tODFMax_All\t<cos(6Phi)>_All\tPhiOfODFMax_All\tavPhi_All\tdPhiCyclesInterval\tavAbsDPhi\n");
+        else fprintf(fileResults,"Cycles\tPressureReduced\tVolume\tBoxMatrix[0][0]\tBoxMatrix[1][1]\tBoxMatrix[1][0]([0][1])\tRho\tV/V_cp\tS1111\tdS1111\tS1122\tdS1122\tS1212\tdS1212\tS2222\tdS2222\tS1112\tdS1112\tS1222\tdS1222\tavNu\tdAvNu\tavB\tdAvB\tavMy\tdAvMy\tavE\tdAvE\tODFMax_One\t<cos(6Phi)>_One\tODFMax_All\t<cos(6Phi)>_All\tPhiOfODFMax_All\tavPhi_All\n");
         fclose(fileResults);
     }
     fileExcelResults = fopen(excelResultsFileName,"rt"); if (fileExcelResults==NULL) {
         fileExcelResults = fopen(excelResultsFileName,"a");
-        if (saveConfigurations) fprintf(fileExcelResults,"PressureReduced\tV/V_cp\tavNu\tODFMax_All\t<cos(6Phi)>_All\tavB\tavMy\tavE\tdPhiCyclesInterval\tavAbsDPhi\n");
-        else fprintf(fileExcelResults,"PressureReduced\tV/V_cp\tavNu\tODFMax_All\t<cos(6Phi)>_All\tavB\tavMy\tavE\n");
+        if (saveConfigurations) fprintf(fileExcelResults,"PressureReduced\tV/V_cp\tavNu\tODFMax_All\t<cos(6Phi)>_All\tPhiOfODFMax_All\tavPhi_All\tavB\tavMy\tavE\tdPhiCyclesInterval\tavAbsDPhi\n");
+        else fprintf(fileExcelResults,"PressureReduced\tV/V_cp\tavNu\tODFMax_All\t<cos(6Phi)>_All\tPhiOfODFMax_All\tavPhi_All\tavB\tavMy\tavE\n");
         fclose(fileExcelResults);
     }
 
@@ -1522,7 +1522,7 @@ int main(int argumentsNumber, char **arguments) {
 
             //tworzenie pliku wynikowego do Origina - rozklad orientacyjny dla wszystkich czastek
             printf("Creation of ALL-particle orientation file for Origin... "); fflush(stdout);
-            componentCounter=0; double averageCos6PhiAll=0, ODFMaxAll=0;
+            componentCounter=0; double averageCos6PhiAll=0, ODFMaxAll=0, averagePhiAll=0;
             fileAllOrientations = fopen(allOrientationsFileName,"rt");
             double ODF_AllP[ODFLength]; for (int i=0;i<ODFLength;i++) ODF_AllP[i]=0; //Orientational Distribution Function (All Particles)
             while(fgets(linia,activeN*50,fileAllOrientations)!=NULL) {
@@ -1532,6 +1532,7 @@ int main(int argumentsNumber, char **arguments) {
                     char data[50]; int licznik=0;
                     while (linia[actIndex]!=',' && licznik<30) data[licznik++]=linia[actIndex++]; actIndex++;
                     double angle = normalizeAngle(strtod(data,NULL)+C);
+                    averagePhiAll+=angle;
                     averageCos6PhiAll+=cos(6.0*angle); componentCounter++;
                     int index = round((angle+C)/2.0/C*(double)(ODFLength-1.0));
                     ODF_AllP[index]++;
@@ -1539,7 +1540,12 @@ int main(int argumentsNumber, char **arguments) {
             }
             fclose(fileAllOrientations);
             suma=0; for (int i=0;i<ODFLength;i++) suma+=ODF_AllP[i]; for (int i=0;i<ODFLength;i++) ODF_AllP[i]/=suma*dPhi;
-            averageCos6PhiAll/=componentCounter; for (int i=0;i<ODFLength;i++) if (ODFMaxAll<ODF_AllP[i]) ODFMaxAll=ODF_AllP[i];
+            averagePhiAll/=componentCounter; averageCos6PhiAll/=componentCounter;
+            int maxODFAllIndex;
+            for (int i=0;i<ODFLength;i++) if (ODFMaxAll<ODF_AllP[i]) {
+                ODFMaxAll=ODF_AllP[i];
+                maxODFAllIndex=i;
+            }
             printf("done\n");
 
             //analiza konfiguracji przejsciowych (dPhi z konfiguracji na konfiguracje)
@@ -1601,11 +1607,11 @@ int main(int argumentsNumber, char **arguments) {
             fileAllOrientationsResults = fopen(allOrientationsResultsFileName,"w");
 
             if (saveConfigurations) {
-                fprintf(fileResults,"%ld\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%ld\t%.12f\n",(cycle+arg5),pressureReduced,avVolume,avBoxMatrix[0],avBoxMatrix[1],avBoxMatrix[2],avRho,avPacFrac,s1111,dS1111,s1122,dS1122,s1212,dS1212,s2222,dS2222,s1112,dS1112,s1222,dS1222,avNu,dAvNu,avB,dAvB,avMy,dAvMy,avE,dAvE,ODFMaxOne,averageCos6PhiOne,ODFMaxAll,averageCos6PhiAll,savedConfigurationsInt,avAbsDPhi);
-                fprintf(fileExcelResults,"%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%ld\t%.12f\n",pressureReduced,avPacFrac,avNu,ODFMaxAll,averageCos6PhiAll,avB,avMy,avE,savedConfigurationsInt,avAbsDPhi);
+                fprintf(fileResults,"%ld\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%ld\t%.12f\n",(cycle+arg5),pressureReduced,avVolume,avBoxMatrix[0],avBoxMatrix[1],avBoxMatrix[2],avRho,avPacFrac,s1111,dS1111,s1122,dS1122,s1212,dS1212,s2222,dS2222,s1112,dS1112,s1222,dS1222,avNu,dAvNu,avB,dAvB,avMy,dAvMy,avE,dAvE,ODFMaxOne,averageCos6PhiOne,ODFMaxAll,averageCos6PhiAll,-C+maxODFAllIndex*dPhi,averagePhiAll,savedConfigurationsInt,avAbsDPhi);
+                fprintf(fileExcelResults,"%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%ld\t%.12f\n",pressureReduced,avPacFrac,avNu,ODFMaxAll,averageCos6PhiAll,-C+maxODFAllIndex*dPhi,averagePhiAll,avB,avMy,avE,savedConfigurationsInt,avAbsDPhi);
             } else {
-                fprintf(fileResults,"%ld\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\n",(cycle+arg5),pressureReduced,avVolume,avBoxMatrix[0],avBoxMatrix[1],avBoxMatrix[2],avRho,avPacFrac,s1111,dS1111,s1122,dS1122,s1212,dS1212,s2222,dS2222,s1112,dS1112,s1222,dS1222,avNu,dAvNu,avB,dAvB,avMy,dAvMy,avE,dAvE,ODFMaxOne,averageCos6PhiOne,ODFMaxAll,averageCos6PhiAll);
-                fprintf(fileExcelResults,"%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\n",pressureReduced,avPacFrac,avNu,ODFMaxAll,averageCos6PhiAll,avB,avMy,avE);
+                fprintf(fileResults,"%ld\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\n",(cycle+arg5),pressureReduced,avVolume,avBoxMatrix[0],avBoxMatrix[1],avBoxMatrix[2],avRho,avPacFrac,s1111,dS1111,s1122,dS1122,s1212,dS1212,s2222,dS2222,s1112,dS1112,s1222,dS1222,avNu,dAvNu,avB,dAvB,avMy,dAvMy,avE,dAvE,ODFMaxOne,averageCos6PhiOne,ODFMaxAll,averageCos6PhiAll,-C+maxODFAllIndex*dPhi,averagePhiAll);
+                fprintf(fileExcelResults,"%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\n",pressureReduced,avPacFrac,avNu,ODFMaxAll,averageCos6PhiAll,-C+maxODFAllIndex*dPhi,averagePhiAll,avB,avMy,avE);
             }
 
             if (!onlyMath[0]) {
