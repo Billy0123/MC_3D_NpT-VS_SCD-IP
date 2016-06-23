@@ -3,10 +3,10 @@
 #PBS -q standard
 #PBS -r n
 #PBS -l walltime=0:5:0
-#PBS -o output/OUT_HCH${VAR1}_gaps-${VAR2}_mS-${VAR3}_mD-${VAR4}_G-${VAR5}_B-${VAR6}_P-${VAR7}_R-${VAR8}_${PBS_JOBID}.txt
-#PBS -e output/ERR_HCH${VAR1}_gaps-${VAR2}_mS-${VAR3}_mD-${VAR4}_G-${VAR5}_B-${VAR6}_P-${VAR7}_R-${VAR8}_${PBS_JOBID}.txt
+#PBS -o output/OUT_HC${VAR11}_${VAR1}_gaps-${VAR2}_mS-${VAR3}_mD-${VAR4}_G-${VAR5}_B-${VAR6}_P-${VAR7}_R-${VAR8}_${PBS_JOBID}.txt
+#PBS -e output/ERR_HC${VAR11}_${VAR1}_gaps-${VAR2}_mS-${VAR3}_mD-${VAR4}_G-${VAR5}_B-${VAR6}_P-${VAR7}_R-${VAR8}_${PBS_JOBID}.txt
 
-#$VAR1-N, $VAR2-gaps, $VAR3-multimerS, $VAR4-multimerD, $VAR5-growing, $VAR6-useSpecificDirectory (UWAGA: NIE 0), $VAR7-pointNumber(from 0), $VAR8-ile razy powtorzyc wykonanie jobu?, $VAR9-iterationsNumber, filterText-filterText, $VAR10-generatorStartPoint
+#$VAR1-N, $VAR2-gaps, $VAR3-multimerS, $VAR4-multimerD, $VAR5-growing, $VAR6-useSpecificDirectory (UWAGA: NIE 0), $VAR7-pointNumber(from 0), $VAR8-ile razy powtorzyc wykonanie jobu?, $VAR9-iterationsNumber, $filterText-filterText, $VAR10-generatorStartPoint, $VAR11-multimerN
 
 
 #UWAGA #1: PBS tworzy indywidualny folder tmp dla kazdego zadania
@@ -19,12 +19,12 @@ cp $PBS_O_WORKDIR/config.txt .
 cp $PBS_O_WORKDIR/startArguments.txt .
 
 #UWAGA #2: Mozna do programu zadac jobID rowny np. 'repeats left' (lub 'none' gdy to zwykla rekurencja [a nie onePoint]). Wtedy w przypadku ewentualnej reanimacji powinno byc latwiej (bo: komenda 'sacct' [i podobne], czy nawet zapis w ERR [jezeli akurat powstanie - na co liczyc nie mozna] da co prawda informacje o jobID nieudanego jobu, jednak NIE DA informacji o jobID jobu 'poprzedniego' [z ktorego on korzystal i ktorego znajomosc potrzebna jest do reanimacji]) - nie bedzie trzeba go szukac po folderach indywidualnie dla kazdego reanimowanego jobu.
-time ./program 2 $PBS_JOBID $VAR1 $VAR2 $VAR3 $VAR4 $VAR5 $VAR9 $VAR6 0 $VAR7 $VAR10
+time ./program 2 $PBS_JOBID $VAR1 $VAR2 $VAR3 $VAR4 $VAR5 $VAR9 $VAR6 0 $VAR7 $VAR10 ${VAR11}
 
-cp -r 2D_N-${VAR1}_gaps-${VAR2}_G-${VAR5}_badanie-${VAR6}_mN-6_mS-${VAR3}_mD-${VAR4} $PBS_O_WORKDIR
+cp -fr 2D_N-${VAR1}_gaps-${VAR2}_G-${VAR5}_badanie-${VAR6}_mN-${VAR11}_mS-${VAR3}_mD-${VAR4} $PBS_O_WORKDIR
 #UWAGA #3: PBS kasuje po sobie tempa automatycznie
 
-ssh ce.reef.man.poznan.pl "cd $PBS_O_WORKDIR; qsub -N ${filterText}G${VAR5}B${VAR6}P${VAR7}R$(($VAR8 - 1)) -v VAR1=$PBS_JOBID,VAR2=$VAR1,VAR3=$VAR2,VAR4=$VAR3,VAR5=$VAR4,VAR6=$VAR5,VAR7=$VAR7,VAR8=$VAR6,VAR9=$(($VAR8 - 1)),filterText=${filterText} qsubTMPRecursionOnePoint";
+ssh ce.reef.man.poznan.pl "cd $PBS_O_WORKDIR; qsub -N ${filterText}G${VAR5}B${VAR6}P${VAR7}R$(($VAR8 - 1)) -v VAR1=$PBS_JOBID,VAR2=$VAR1,VAR3=$VAR2,VAR4=$VAR3,VAR5=$VAR4,VAR6=$VAR5,VAR7=$VAR7,VAR8=$VAR6,VAR9=$(($VAR8 - 1)),filterText=${filterText},VAR10=${VAR11} qsubTMPRecursionOnePoint";
 #ui.inula.man.poznan.pl
 
 exit 0

@@ -3,25 +3,24 @@
 #PBS -q standard
 #PBS -r n
 #PBS -l walltime=0:5:0
-#PBS -o output/OUT_HCH${VAR2}_gaps-${VAR3}_mS-${VAR4}_mD-${VAR5}_G-${VAR6}_B-${VAR9}_P-${VAR7}_${PBS_JOBID}.txt
-#PBS -e output/ERR_HCH${VAR2}_gaps-${VAR3}_mS-${VAR4}_mD-${VAR5}_G-${VAR6}_B-${VAR9}_P-${VAR7}_${PBS_JOBID}.txt
+#PBS -o output/OUT_HC${VAR11}_${VAR2}_gaps-${VAR3}_mS-${VAR4}_mD-${VAR5}_G-${VAR6}_B-${VAR9}_P-${VAR7}_${PBS_JOBID}.txt
+#PBS -e output/ERR_HC${VAR11}_${VAR2}_gaps-${VAR3}_mS-${VAR4}_mD-${VAR5}_G-${VAR6}_B-${VAR9}_P-${VAR7}_${PBS_JOBID}.txt
 
 #UWAGA #1 !!! Pamietac o tym, ze plik konfiguracji LOAD bedzie zawieral wartosc argumentu do 8 miejsc po przecinku, zaokraglana do 3 w nazwie. Jezeli tworzona jest konfiguracja poczatkowa 'ze srodka zakresu symulacji' (przy dzieleniu calosci na kilka niezaleznych czesci), nalezy zadac jej odpowiednia dokladnosc (im wieksza tym lepiej), aby zle zaokraglenia nie wplynely na 3 pierwsze cyfry znaczace nazw (takie punkty sie wysypia, bo obliczenia na podstawie 'pointNumber' beda lecialy z dokladnoscia typu double od startArg -> i odpowiednie pliki moga nie zostac znalezione).
 
 #UWAGA #2 !!! Pamietac o wyzerowaniu liczby krokow generatora liczb pseudolosowych (by niepotrzebnie nie czekac na to przy pierwszym runie -> OPCJA W CONFIGU) oraz o ustawieniu configu na startowanie generatora z zegara CPU.
 
-#$VAR1-job_id jobu, ktory zawieral loadowany punkt, $VAR2-N, $VAR3-gaps, $VAR4-multimerS, $VAR5-multimerD, $VAR6-growing, $VAR7-pointNumber(from 0), $VAR8-iterationsNumber, $VAR9-useSpecificDirectory (UWAGA: NIE 0), $VAR10-MAX(+1)PointNumber(from 0), filterText-filterText
+#$VAR1-job_id jobu, ktory zawieral loadowany punkt, $VAR2-N, $VAR3-gaps, $VAR4-multimerS, $VAR5-multimerD, $VAR6-growing, $VAR7-pointNumber(from 0), $VAR8-iterationsNumber, $VAR9-useSpecificDirectory (UWAGA: NIE 0), $VAR10-MAX(+1)PointNumber(from 0), $filterText-filterText, $VAR11-multimerN
 
 
 cd $PBS_O_WORKDIR
 #pressure do 3 miejsc po przecinku (zeby pasowalo do nazw plikow, lista DOMYSLNIE na G=1)
 listLength=$(wc -l startArguments.txt | cut -f1 -d' ');
 if [ ${VAR6} = 1 ]; then
-   linia=$(cat startArguments.txt | head -n $((${VAR7} + 1)) | tail -1);
+   PRESSURE=$(cut -f2 startArguments.txt | head -n $((${VAR7} + 1)) | tail -1);
 else
-   linia=$(cat startArguments.txt | head -n $((${listLength} - ${VAR7})) | tail -1);
+   PRESSURE=$(cut -f2 startArguments.txt | head -n $((${listLength} - ${VAR7})) | tail -1);
 fi
-PRESSURE=${linia##*	};
 
 #UWAGA #3: PBS tworzy indywidualny folder tmp dla kazdego zadania
 cd $TMPDIR
@@ -31,16 +30,16 @@ echo "==============================="
 cp $PBS_O_WORKDIR/program .
 cp $PBS_O_WORKDIR/config.txt .
 cp $PBS_O_WORKDIR/startArguments.txt .
-mkdir 2D_N-${VAR2}_gaps-${VAR3}_G-${VAR6}_badanie-${VAR9}_mN-6_mS-${VAR4}_mD-${VAR5}
-cp $PBS_O_WORKDIR/2D_N-${VAR2}_gaps-${VAR3}_G-${VAR6}_badanie-${VAR9}_mN-6_mS-${VAR4}_mD-${VAR5}/j-${VAR1}_Configurations_arg-${PRESSURE}.txt 2D_N-${VAR2}_gaps-${VAR3}_G-${VAR6}_badanie-${VAR9}_mN-6_mS-${VAR4}_mD-${VAR5} && {
+mkdir 2D_N-${VAR2}_gaps-${VAR3}_G-${VAR6}_badanie-${VAR9}_mN-${VAR11}_mS-${VAR4}_mD-${VAR5}
+cp $PBS_O_WORKDIR/2D_N-${VAR2}_gaps-${VAR3}_G-${VAR6}_badanie-${VAR9}_mN-${VAR11}_mS-${VAR4}_mD-${VAR5}/j-${VAR1}_Configurations_arg-${PRESSURE}.txt 2D_N-${VAR2}_gaps-${VAR3}_G-${VAR6}_badanie-${VAR9}_mN-${VAR11}_mS-${VAR4}_mD-${VAR5} && {
 
    #UWAGA #4: Mozna do programu zadac jobID rowny np. 'repeats left' (lub 'none' gdy to zwykla rekurencja [a nie onePoint]). Wtedy w przypadku ewentualnej reanimacji powinno byc latwiej (bo: komenda 'sacct' [i podobne], czy nawet zapis w ERR [jezeli akurat powstanie - na co liczyc nie mozna] da co prawda informacje o jobID nieudanego jobu, jednak NIE DA informacji o jobID jobu 'poprzedniego' [z ktorego on korzystal i ktorego znajomosc potrzebna jest do reanimacji]) - nie bedzie trzeba go szukac po folderach indywidualnie dla kazdego reanimowanego jobu.
-   time ./program 4 $PBS_JOBID $VAR1 $VAR2 $VAR3 $VAR4 $VAR5 $VAR6 $VAR7 $VAR8 $VAR9 0
+   time ./program 4 $PBS_JOBID $VAR1 $VAR2 $VAR3 $VAR4 $VAR5 $VAR6 $VAR7 $VAR8 $VAR9 0 ${VAR11}
 
-   cp -r 2D_N-${VAR2}_gaps-${VAR3}_G-${VAR6}_badanie-${VAR9}_mN-6_mS-${VAR4}_mD-${VAR5} $PBS_O_WORKDIR
+   cp -fr 2D_N-${VAR2}_gaps-${VAR3}_G-${VAR6}_badanie-${VAR9}_mN-${VAR11}_mS-${VAR4}_mD-${VAR5} $PBS_O_WORKDIR
    #UWAGA #5: PBS kasuje po sobie tempa automatycznie
 
-   ssh ce.reef.man.poznan.pl "cd $PBS_O_WORKDIR; qsub -N ${filterText}G${VAR6}B${VAR9}P$(($VAR7 + $VAR8)) -o output/OUT_HCH${VAR2}_gaps-${VAR3}_mS-${VAR4}_mD-${VAR5}_G-${VAR6}_B-${VAR9}_P-$(($VAR7 + $VAR8))_prevJobID-${PBS_JOBID}.txt -e output/ERR_HCH${VAR2}_gaps-${VAR3}_mS-${VAR4}_mD-${VAR5}_G-${VAR6}_B-${VAR9}_P-$(($VAR7 + $VAR8))_prevJobID-${PBS_JOBID}.txt -v VAR1=$PBS_JOBID,VAR2=$VAR2,VAR3=$VAR3,VAR4=$VAR4,VAR5=$VAR5,VAR6=$VAR6,VAR7=$(($VAR7 + $VAR8 - 1)),VAR8=$VAR8,VAR9=$VAR9,VAR10=$VAR10,filterText=${filterText} qsubTMPRecursion";
+   ssh ce.reef.man.poznan.pl "cd $PBS_O_WORKDIR; qsub -N ${filterText}G${VAR6}B${VAR9}P$(($VAR7 + $VAR8)) -o output/OUT_HC${VAR11}_${VAR2}_gaps-${VAR3}_mS-${VAR4}_mD-${VAR5}_G-${VAR6}_B-${VAR9}_P-$(($VAR7 + $VAR8))_prevJobID-${PBS_JOBID}.txt -e output/ERR_HC${VAR11}_${VAR2}_gaps-${VAR3}_mS-${VAR4}_mD-${VAR5}_G-${VAR6}_B-${VAR9}_P-$(($VAR7 + $VAR8))_prevJobID-${PBS_JOBID}.txt -v VAR1=$PBS_JOBID,VAR2=$VAR2,VAR3=$VAR3,VAR4=$VAR4,VAR5=$VAR5,VAR6=$VAR6,VAR7=$(($VAR7 + $VAR8 - 1)),VAR8=$VAR8,VAR9=$VAR9,VAR10=$VAR10,filterText=${filterText},VAR11=${VAR11} qsubTMPRecursion";
    #ui.inula.man.poznan.pl
 } || {
    echo "Missing configuration file (previous job failed) or actual job failed at any step. Stopping recursion.";
