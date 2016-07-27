@@ -1,11 +1,11 @@
 bufferValue		=12345;		//test dla odczytu pierwszej wartosci (12345), dla przeczyszczenia buforu; UWAGA: ponizsze komentarze moga miec MAX 500 znakow
-N			=36;		//obslugiwane: N%56==0, N%780==0, floor(sqrt(N))==sqrt(N)
+N			=504;		//obslugiwane: N%56==0, N%780==0, floor(sqrt(N))==sqrt(N)
 gaps			=0;		//liczba luk w ukladzie (dziur-defektow), rozmieszczonych losowo przy inicie (nie zbyt blisko)
-multimerN		=98;		//obslugiwane: 5, 6, 7, dowolne
+multimerN		=6;		//obslugiwane: 5, 6, 7, dowolne
 initMode		=0;		//istotne tylko dla multimerN=7: 0-A, 1-B, 2-C (see WojTreKow2003PRE)
 multimerS		=1.00;		//dlugosc bokow n-katow foremnych
 multimerD		=1.000000;		//srednica dyskow we wierzcholkach n-katow
-pressureOfNotFluid	=1.24;		//cisnienie, ponizej ktorego ksztalt pudla nie fluktuuje (ok. 1.24 dla d/\sigma=1 i multimerN=6) - ponizej niego nie mozna wyznaczyc modulow sprezystosci
+pressureOfNotFluid	=1.24;		//cisnienie/pacFrac, ponizej/powyzej ktorego ksztalt pudla nie fluktuuje (ok. p=1.24 dla d/\sigma=1 i multimerN=6) - ponizej/powyzej niego nie mozna wyznaczyc modulow sprezystosci (p/pacFrac - TWARDO w kodzie)
 growing			=0;		//0-rozprezanie, 1-sprezanie
 loadedConfiguration	=0;		//0-nowe badanie, 1-wczytaj konfiguracje
 loadedArg		=10.000;	//gdy loadedConfiguration=1, wskaze na plik konfiguracyjny, ktory zostanie wczytany
@@ -24,17 +24,17 @@ neighRadiusMod		=1.3;		//neighRadius=neighRadiusMod*maxDistance (najblizsi sasie
 intervalOrientations	=1000;		//liczba cykli, co ktora zapisywana jest orientacja czastki - wielokrotnosc intervalSampling
 skipFirstIteration	=0;		//0-zacznij badanie od pierwszego punktu pomiarowego, 1-zacznij badanie od drugiego punktu pomiarowego
 useSpecificDirectory	=1;		//0-stworz nowy folder (kolejny), x(>0)-uzyj (stworz) folder o numerze x
-cyclesOfEquilibration	=50000;	//cykle na rozruch
-cyclesOfMeasurement	=0;	//cykle na pomiar (po rozruchu)
+cyclesOfEquilibration	=10000;	//cykle na rozruch
+cyclesOfMeasurement	=10000;	//cykle na pomiar (po rozruchu)
 intervalResults		=10;		//liczba cykli, co ktora zapisywane sa mierzone wielkosci - wielokrotnosc intervalSampling
 maxDeltaR		=0.15;		//najwieksza wartosc ruchu probnego czastki
 desiredAcceptanceRatioR	=0.3;		//wartosc akceptacji ruchow probnych czastek
 desiredAcceptanceRatioV	=0.2;		//wartosc akceptacji ruchow probnych pudla
 useFileToIterate	=0;		//0-stosuj PONIZSZE ustawienia, 1-korzystaj z pliku 'startArguments.txt' do iterowania (plik ustawiony DOMYSLNIE na growing=1, max 1000 iteracji; UWAGA-kolumny: pierwsza:pacFrac[dowolna], druga:pressure[.3], trzecia:BRAK lub 1 (punkt bedzie tylko rownowagowany BEZ etapu pomiarowego)
 startMinPacFrac		=1.0001;	//wartosc pacFrac, (startowe V przy growing=1)
-startMaxPacFrac		=1.0;	//wartosc pacFrac, (startowe V przy growing=0)
+startMaxPacFrac		=1.0001;	//wartosc pacFrac, (startowe V przy growing=0)
 minArg			=5.0000;	//najmniejsze badane cisnienie (startArg przy growing=1)
-maxArg			=3.0000;	//najwieksze badane cisnienie (startArg przy growing=0)
+maxArg			=20.0000;	//najwieksze badane cisnienie (startArg przy growing=0)
 multiplyArgument	=1;		//0-argument dodawany (interwaly), 1-argument mnozony (czynnik ponizej)
 multiplyFactor		=1.01010101010101;	//gdy multiplyArgument=1, factor zwiekszania argumentu (>1)
 intervalMin[0]		=0.0000;	//skoki iteracji dla przedzialow cisnienia (poczatkowy i koncowy musza wykraczac poza minArg i maxArg)

@@ -474,7 +474,8 @@ int attemptToDisplaceAParticle (particle *particles, int index, double boxMatrix
 int attemptToChangeVolume (particle *particles, double pressure, double boxMatrix[2][2], double *volume) {
     int result=1;
     double /*lnNewBoxMatrix[2][2], */newBoxMatrix[2][2];
-    if (pressure>pressureRealOfNotFluid) {  //dozwolone zmiany ksztaltu pudla (faza stala)
+    if ((*volume)/VcpPerParticle/N<pressureRealOfNotFluid) {
+    //if (pressure>pressureRealOfNotFluid) {  //dozwolone zmiany ksztaltu pudla (faza stala)
         /*for (int i=0;i<2;i++) for (int j=0;j<2;j++) lnNewBoxMatrix[i][j]=log(boxMatrix[i][j]);
         lnNewBoxMatrix[0][0]+=(MTGenerate(randomStartStep)%1000000/1000000.0-0.5)*deltaV;
         lnNewBoxMatrix[1][1]+=(MTGenerate(randomStartStep)%1000000/1000000.0-0.5)*deltaV;
@@ -1128,7 +1129,7 @@ int main(int argumentsNumber, char **arguments) {
 
         if (!onlyMath[0]) {
             if (arg[0]==startArg[0] && !loadedConfiguration) {
-                printf("INIT POS.- N: %d, gaps: %d, growing: %d, StartPressRed: %.4f (StartDen: %.4f, startPacFrac: %.4f), mN: %d, mS: %.2f, mD: %.6f\n",N,gaps,growing,startArg[0],rho,pacFrac,multimerN,multimerS,multimerD);
+                printf("INIT POS.- N: %d, gaps: %d, growing: %d, StartPressRed: %.7f (StartDen: %.7f, startPacFrac: %.7f), mN: %d, mS: %.2f, mD: %.6f\n",N,gaps,growing,startArg[0],rho,pacFrac,multimerN,multimerS,multimerD);
                 if (!initPositions(particles,boxMatrix,matrixOfParticlesSize,n,matrixCellXY,matrixCellPhi,pacFrac)) return 0;
                 adjustAngles(particles,boxMatrix);
                 updateNeighbourList(particles,boxMatrix); //matrix(comment) 12/16
@@ -1181,7 +1182,7 @@ int main(int argumentsNumber, char **arguments) {
                     particles[i].normR[0]=(boxMatrix[1][1]*particles[i].r[0]-boxMatrix[0][1]*particles[i].r[1])/detBoxMatrix;
                     particles[i].normR[1]=-(boxMatrix[1][0]*particles[i].r[0]-boxMatrix[0][0]*particles[i].r[1])/detBoxMatrix;
                 }
-                printf("LOADING POS.- N: %d, gaps: %d, growing: %d, StartPressRed: %.4f (startDen: %.4f, startPacFrac: %.4f), RandStart: %.1f, RandStep: %.1f, Cycles: %ld, DeltaR: %.4f, DeltaV: %.4f\n",N,gaps,growing,arg4,arg3,pacFrac,arg1,arg2,arg5,arg9,arg10);
+                printf("LOADING POS.- N: %d, gaps: %d, growing: %d, StartPressRed: %.7f (startDen: %.7f, startPacFrac: %.7f), RandStart: %.1f, RandStep: %.1f, Cycles: %ld, DeltaR: %.4f, DeltaV: %.4f\n",N,gaps,growing,arg4,arg3,pacFrac,arg1,arg2,arg5,arg9,arg10);
                 //for (int i=0;i<2;i++) for (int j=0;j<2;j++) printf("boxMatrix[%d][%d]=%.12f\n",i,j,boxMatrix[i][j]);
                 //for (int i=0;i<N;i++) printf("%.12f,  %.12f,  %.12f\n",particles[i].r[0],particles[i].r[1],particles[i].phi);return 0;
                 updateNeighbourList(particles,boxMatrix); //matrix(comment) 13/16
@@ -1216,8 +1217,8 @@ int main(int argumentsNumber, char **arguments) {
                     randomStartStep[0]=generatorStartPoint;
                     randomStartStep[1]=0;
                 }
-                printf("Start of equilibration at reduced pressure: %.4f (startDen: %.4f, startPacFrac: %.4f)... (%ld cycles)\n",pressureReduced,rho,pacFrac,cyclesOfEquilibration);
-            } else printf("Start of mathOnly mode for: N: %d, gaps: %d, growing: %d, pressRed: %.4f, mN: %d, mS: %.2f, mD: %.6f\n",N,gaps,growing,pressureReduced,multimerN,multimerS,multimerD);
+                printf("Start of equilibration at reduced pressure: %.7f (startDen: %.7f, startPacFrac: %.7f)... (%ld cycles)\n",pressureReduced,rho,pacFrac,cyclesOfEquilibration);
+            } else printf("Start of mathOnly mode for: N: %d, gaps: %d, growing: %d, pressRed: %.7f, mN: %d, mS: %.2f, mD: %.6f\n",N,gaps,growing,pressureReduced,multimerN,multimerS,multimerD);
 
 
 
@@ -1288,11 +1289,11 @@ int main(int argumentsNumber, char **arguments) {
                     if (cycle%intervalSampling==0) {
                         double acceptanceRatioR = displacedNumberR/(double)attemptedNumberR,
                                acceptanceRatioV = displacedNumberV/(double)attemptedNumberV;
-                        /*possibleDistance+=sqrt(0.5*deltaR*deltaR)*((double)intervalSampling)*acceptanceRatioR*5.0;  //ostatnie *5.0 - dla bezpieczenstwa; sqrt(0.5*deltaR*0.5*deltaR+0.5*deltaR*0.5*deltaR)=sqrt(0.5*deltaR*deltaR)
+                        possibleDistance+=sqrt(0.5*deltaR*deltaR)*((double)intervalSampling)*acceptanceRatioR*5.0;  //ostatnie *5.0 - dla bezpieczenstwa; sqrt(0.5*deltaR*0.5*deltaR+0.5*deltaR*0.5*deltaR)=sqrt(0.5*deltaR*deltaR)
                         if (possibleDistance>=neighSafeDistance) {
                             updateNeighbourList(particles,boxMatrix);
                             possibleDistance=0;
-                        }*/  //matrix(comment) 16/16
+                        }  //matrix(comment) 16/16
 
                         /////wypisywanie danych czesciej niz normalnie i PRZED zrownowagowaniem
                         /*if (cycle%50==0) {
@@ -1685,7 +1686,7 @@ int main(int argumentsNumber, char **arguments) {
                     char data[50]; int licznik=0;
                     while (linia[actIndex]!=',' && licznik<30) data[licznik++]=linia[actIndex++]; actIndex++;
                     double angle = normalizeAngle(strtod(data,NULL)+C);
-                    averagePhiAll+=angle;
+                    /*averagePhiAll+=angle;*/averagePhiAll=+normalizeAngle(strtod(data,NULL));
                     averageCos6PhiAll+=cos(6.0*angle); componentCounter++;
                     int index = round((angle+C)/2.0/C*(double)(ODFLength-1.0));
                     ODF_AllP[index]++;
@@ -1760,11 +1761,11 @@ int main(int argumentsNumber, char **arguments) {
             fileAllOrientationsResults = fopen(allOrientationsResultsFileName,"w");
 
             if (saveConfigurations) {
-                fprintf(fileResults,"%ld\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%ld\t%.12f\n",(cycle+arg5),pressureReduced,avVolume,avBoxMatrix[0],avBoxMatrix[1],avBoxMatrix[2],avRho,avPacFrac,s1111,dS1111,s1122,dS1122,s1212,dS1212,s2222,dS2222,s1112,dS1112,s1222,dS1222,avNu,dAvNu,avB,dAvB,avMy,dAvMy,avE,dAvE,ODFMaxOne,averageCos6PhiOne,ODFMaxAll,averageCos6PhiAll,-C+maxODFAllIndex*dPhi,averagePhiAll,savedConfigurationsInt,avAbsDPhi);
-                fprintf(fileExcelResults,"%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%ld\t%.12f\n",pressureReduced,avPacFrac,avNu,ODFMaxAll,averageCos6PhiAll,-C+maxODFAllIndex*dPhi,averagePhiAll,avB,avMy,avE,savedConfigurationsInt,avAbsDPhi);
+                fprintf(fileResults,"%ld\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%ld\t%.17f\n",(cycle+arg5),pressureReduced,avVolume,avBoxMatrix[0],avBoxMatrix[1],avBoxMatrix[2],avRho,avPacFrac,s1111,dS1111,s1122,dS1122,s1212,dS1212,s2222,dS2222,s1112,dS1112,s1222,dS1222,avNu,dAvNu,avB,dAvB,avMy,dAvMy,avE,dAvE,ODFMaxOne,averageCos6PhiOne,ODFMaxAll,averageCos6PhiAll,-C+maxODFAllIndex*dPhi,averagePhiAll,savedConfigurationsInt,avAbsDPhi);
+                fprintf(fileExcelResults,"%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%ld\t%.17f\n",pressureReduced,avPacFrac,avNu,ODFMaxAll,averageCos6PhiAll,-C+maxODFAllIndex*dPhi,averagePhiAll,avB,avMy,avE,savedConfigurationsInt,avAbsDPhi);
             } else {
-                fprintf(fileResults,"%ld\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\n",(cycle+arg5),pressureReduced,avVolume,avBoxMatrix[0],avBoxMatrix[1],avBoxMatrix[2],avRho,avPacFrac,s1111,dS1111,s1122,dS1122,s1212,dS1212,s2222,dS2222,s1112,dS1112,s1222,dS1222,avNu,dAvNu,avB,dAvB,avMy,dAvMy,avE,dAvE,ODFMaxOne,averageCos6PhiOne,ODFMaxAll,averageCos6PhiAll,-C+maxODFAllIndex*dPhi,averagePhiAll);
-                fprintf(fileExcelResults,"%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\t%.12f\n",pressureReduced,avPacFrac,avNu,ODFMaxAll,averageCos6PhiAll,-C+maxODFAllIndex*dPhi,averagePhiAll,avB,avMy,avE);
+                fprintf(fileResults,"%ld\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\n",(cycle+arg5),pressureReduced,avVolume,avBoxMatrix[0],avBoxMatrix[1],avBoxMatrix[2],avRho,avPacFrac,s1111,dS1111,s1122,dS1122,s1212,dS1212,s2222,dS2222,s1112,dS1112,s1222,dS1222,avNu,dAvNu,avB,dAvB,avMy,dAvMy,avE,dAvE,ODFMaxOne,averageCos6PhiOne,ODFMaxAll,averageCos6PhiAll,-C+maxODFAllIndex*dPhi,averagePhiAll);
+                fprintf(fileExcelResults,"%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\t%.17f\n",pressureReduced,avPacFrac,avNu,ODFMaxAll,averageCos6PhiAll,-C+maxODFAllIndex*dPhi,averagePhiAll,avB,avMy,avE);
             }
 
             if (!onlyMath[0]) {
