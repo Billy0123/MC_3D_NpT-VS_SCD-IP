@@ -58,8 +58,8 @@ public class getmissingjobs {
                 String actualFolderList[] = new File("2D_N-"+N+"_gaps-"+gaps+"_G-"+G+"_badanie-"+String.valueOf(i+1)+"_mN-"+mN+"_mS-"+mS+"_mD-"+mD).list();
                 int minJobID = maxJobID;
                 if (actualFolderList!=null) for (int k=0;k<actualFolderList.length;k++) 
-                    if (actualFolderList[k].contains(pressureList[G.equals("1")?j:(pressureList.length-1-j)])) 
-                        if (actualFolderList[k].contains("Configurations") && !actualFolderList[k].endsWith("Results.txt") && !actualFolderList[k].endsWith("transient.txt")) 
+                    if (actualFolderList[k].contains("arg-"+pressureList[G.equals("1")?j:(pressureList.length-1-j)])) 
+                        if (actualFolderList[k].contains("Configurations") && actualFolderList[k].endsWith("Results.txt") && !actualFolderList[k].endsWith("transient.txt")) 
                             try{minJobID = Math.min(minJobID,Integer.parseInt(actualFolderList[k].substring(2).split("_")[0]));}catch(Exception e1){}
                 saveJobIDs.write(String.valueOf(minJobID+startPreviousIteration)); saveJobIDs.newLine();
             }

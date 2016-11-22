@@ -28,13 +28,13 @@ mkdir 2D_N-${VAR2}_gaps-${VAR3}_G-${VAR6}_badanie-${VAR9}_mN-${VAR11}_mS-${VAR4}
 cp $PBS_O_WORKDIR/2D_N-${VAR2}_gaps-${VAR3}_G-${VAR6}_badanie-${VAR9}_mN-${VAR11}_mS-${VAR4}_mD-${VAR5}/j-${VAR1}_Configurations_arg-${PRESSURE}.txt 2D_N-${VAR2}_gaps-${VAR3}_G-${VAR6}_badanie-${VAR9}_mN-${VAR11}_mS-${VAR4}_mD-${VAR5} && {
 
    #UWAGA #2: Mozna do programu zadac jobID rowny np. 'repeats left' (lub 'none' gdy to zwykla rekurencja [a nie onePoint]). Wtedy w przypadku ewentualnej reanimacji powinno byc latwiej (bo: komenda 'sacct' [i podobne], czy nawet zapis w ERR [jezeli akurat powstanie - na co liczyc nie mozna] da co prawda informacje o jobID nieudanego jobu, jednak NIE DA informacji o jobID jobu 'poprzedniego' [z ktorego on korzystal i ktorego znajomosc potrzebna jest do reanimacji]) - nie bedzie trzeba go szukac po folderach indywidualnie dla kazdego reanimowanego jobu.
-   time ./program 4 $PBS_JOBID $VAR1 $VAR2 $VAR3 $VAR4 $VAR5 $VAR6 $VAR7 $(($VAR8 + 1)) $VAR9 1 ${VAR11}
+   time ./program 4 $VAR1 $VAR1 $VAR2 $VAR3 $VAR4 $VAR5 $VAR6 $VAR7 $(($VAR8 + 1)) $VAR9 1 ${VAR11}
 
    cp -fr 2D_N-${VAR2}_gaps-${VAR3}_G-${VAR6}_badanie-${VAR9}_mN-${VAR11}_mS-${VAR4}_mD-${VAR5} $PBS_O_WORKDIR
    #UWAGA #3: PBS kasuje po sobie tempa automatycznie
 
    if [ $(($VAR7 + $VAR8 + 1)) -lt $VAR10 ]; then 
-   ssh ce.reef.man.poznan.pl "cd $PBS_O_WORKDIR; qsub -N ${filterText}G${VAR6}B${VAR9}P$(($VAR7 + $VAR8 + 1)) -o output/OUT_HC${VAR11}_${VAR2}_gaps-${VAR3}_mS-${VAR4}_mD-${VAR5}_G-${VAR6}_B-${VAR9}_P-$(($VAR7 + $VAR8 + 1))_prevJobID-${PBS_JOBID}.txt -e output/ERR_HC${VAR11}_${VAR2}_gaps-${VAR3}_mS-${VAR4}_mD-${VAR5}_G-${VAR6}_B-${VAR9}_P-$(($VAR7 + $VAR8 + 1))_prevJobID-${PBS_JOBID}.txt -v VAR1=$PBS_JOBID,VAR2=$VAR2,VAR3=$VAR3,VAR4=$VAR4,VAR5=$VAR5,VAR6=$VAR6,VAR7=$(($VAR7 + $VAR8)),VAR8=$VAR8,VAR9=$VAR9,VAR10=$VAR10,filterText=${filterText},VAR11=${VAR11} qsubTMPRecursion";
+   ssh ce.reef.man.poznan.pl "cd $PBS_O_WORKDIR; qsub -N ${filterText}G${VAR6}B${VAR9}P$(($VAR7 + $VAR8 + 1)) -o output/OUT_HC${VAR11}_${VAR2}_gaps-${VAR3}_mS-${VAR4}_mD-${VAR5}_G-${VAR6}_B-${VAR9}_P-$(($VAR7 + $VAR8 + 1))_prevJobID-${PBS_JOBID}.txt -e output/ERR_HC${VAR11}_${VAR2}_gaps-${VAR3}_mS-${VAR4}_mD-${VAR5}_G-${VAR6}_B-${VAR9}_P-$(($VAR7 + $VAR8 + 1))_prevJobID-${PBS_JOBID}.txt -v VAR1=$VAR1,VAR2=$VAR2,VAR3=$VAR3,VAR4=$VAR4,VAR5=$VAR5,VAR6=$VAR6,VAR7=$(($VAR7 + $VAR8)),VAR8=$VAR8,VAR9=$VAR9,VAR10=$VAR10,filterText=${filterText},VAR11=${VAR11} qsubTMPRecursion";
    #ui.inula.man.poznan.pl
    fi
 } || {

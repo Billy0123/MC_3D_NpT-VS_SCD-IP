@@ -35,14 +35,14 @@ mkdir 2D_N-$2_gaps-$3_G-$6_badanie-$9_mN-${12}_mS-$4_mD-$5
 cp $SLURM_SUBMIT_DIR/2D_N-$2_gaps-$3_G-$6_badanie-$9_mN-${12}_mS-$4_mD-$5/j-$1_Configurations_arg-${PRESSURE}.txt 2D_N-$2_gaps-$3_G-$6_badanie-$9_mN-${12}_mS-$4_mD-$5 && {
 
    #UWAGA #4: Mozna do programu zadac jobID rowny np. 'repeats left' (lub 'none' gdy to zwykla rekurencja [a nie onePoint]). Wtedy w przypadku ewentualnej reanimacji powinno byc latwiej (bo: komenda 'sacct' [i podobne], czy nawet zapis w ERR [jezeli akurat powstanie - na co liczyc nie mozna] da co prawda informacje o jobID nieudanego jobu, jednak NIE DA informacji o jobID jobu 'poprzedniego' [z ktorego on korzystal i ktorego znajomosc potrzebna jest do reanimacji]) - nie bedzie trzeba go szukac po folderach indywidualnie dla kazdego reanimowanego jobu.
-   time srun ./program 4 $SLURM_JOBID $1 $2 $3 $4 $5 $6 $7 $8 $9 0 ${12}
+   time srun ./program 4 $1 $1 $2 $3 $4 $5 $6 $7 $8 $9 0 ${12}
 
    cp -fr 2D_N-$2_gaps-$3_G-$6_badanie-$9_mN-${12}_mS-$4_mD-$5 $SLURM_SUBMIT_DIR
    #UWAGA #5: SLURM nie kasuje po sobie tempa automatycznie
    rm -r $TMPDIR/tmp_mb1991_$SLURM_JOB_ID
 
    cd $SLURM_SUBMIT_DIR
-   sbatch --job-name=${11}G$6B$9P$(($7 + $8)) --output=output/OUT_HC${12}_$2_gaps-$3_mS-$4_mD-$5_G-$6_B-$9_P-$(($7 + $8))_%j.txt --error=output/ERR_HC${12}_$2_gaps-$3_mS-$4_mD-$5_G-$6_B-$9_P-$(($7 + $8))_%j.txt sbatchTMPRecursion $SLURM_JOBID $2 $3 $4 $5 $6 $(($7 + $8 - 1)) $8 $9 ${10} ${11} ${12};
+   sbatch --job-name=${11}G$6B$9P$(($7 + $8)) --output=output/OUT_HC${12}_$2_gaps-$3_mS-$4_mD-$5_G-$6_B-$9_P-$(($7 + $8))_%j.txt --error=output/ERR_HC${12}_$2_gaps-$3_mS-$4_mD-$5_G-$6_B-$9_P-$(($7 + $8))_%j.txt sbatchTMPRecursion $1 $2 $3 $4 $5 $6 $(($7 + $8 - 1)) $8 $9 ${10} ${11} ${12};
 } || {
    echo "Missing configuration file (previous job failed) or actual job failed at any step. Stopping recursion.";
 }
