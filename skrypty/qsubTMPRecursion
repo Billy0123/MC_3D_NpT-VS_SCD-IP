@@ -24,6 +24,7 @@ echo "==============================="
 cp $PBS_O_WORKDIR/program .
 cp $PBS_O_WORKDIR/config.txt .
 cp $PBS_O_WORKDIR/startArguments.txt .
+echo "files copied"
 mkdir 2D_N-${VAR2}_gaps-${VAR3}_G-${VAR6}_badanie-${VAR9}_mN-${VAR11}_mS-${VAR4}_mD-${VAR5}
 cp $PBS_O_WORKDIR/2D_N-${VAR2}_gaps-${VAR3}_G-${VAR6}_badanie-${VAR9}_mN-${VAR11}_mS-${VAR4}_mD-${VAR5}/j-${VAR1}_Configurations_arg-${PRESSURE}.txt 2D_N-${VAR2}_gaps-${VAR3}_G-${VAR6}_badanie-${VAR9}_mN-${VAR11}_mS-${VAR4}_mD-${VAR5} && {
 

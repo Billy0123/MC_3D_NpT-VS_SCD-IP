@@ -31,6 +31,7 @@ echo "==============================="
 cp $SLURM_SUBMIT_DIR/program .
 cp $SLURM_SUBMIT_DIR/config.txt .
 cp $SLURM_SUBMIT_DIR/startArguments.txt .
+echo "files copied"
 mkdir 2D_N-$2_gaps-$3_G-$6_badanie-$9_mN-${12}_mS-$4_mD-$5
 cp $SLURM_SUBMIT_DIR/2D_N-$2_gaps-$3_G-$6_badanie-$9_mN-${12}_mS-$4_mD-$5/j-$1_Configurations_arg-${PRESSURE}.txt 2D_N-$2_gaps-$3_G-$6_badanie-$9_mN-${12}_mS-$4_mD-$5 && {
 

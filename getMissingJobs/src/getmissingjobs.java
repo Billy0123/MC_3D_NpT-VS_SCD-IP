@@ -11,7 +11,8 @@ public class getmissingjobs {
     public getmissingjobs (int minDirectory, int maxDirectory, int minPoint, int maxPoint, int maxJobID, String N, String gaps, 
             String G, String mN, String mS, String mD, String startArgumentsFileName, String fileRunningJobsName, String filterText, 
             String fileJobIDName, int startPreviousIteration, String[] fileDirectoriesName, String[] filePointsName) {
-        try {
+        
+        try { 
             parameters[0]=fileDirectoriesName[1];
             parameters[1]=filePointsName[1];
             

@@ -18,6 +18,7 @@ echo "==============================="
 cp $SLURM_SUBMIT_DIR/program .
 cp $SLURM_SUBMIT_DIR/config.txt .
 cp $SLURM_SUBMIT_DIR/startArguments.txt .
+echo "files copied"
 
 #UWAGA #2: Mozna do programu zadac jobID rowny np. 'repeats left' (lub 'none' gdy to zwykla rekurencja [a nie onePoint]). Wtedy w przypadku ewentualnej reanimacji powinno byc latwiej (bo: komenda 'sacct' [i podobne], czy nawet zapis w ERR [jezeli akurat powstanie - na co liczyc nie mozna] da co prawda informacje o jobID nieudanego jobu, jednak NIE DA informacji o jobID jobu 'poprzedniego' [z ktorego on korzystal i ktorego znajomosc potrzebna jest do reanimacji]) - nie bedzie trzeba go szukac po folderach indywidualnie dla kazdego reanimowanego jobu.
 time srun ./program 2 ${13} $1 $2 $3 $4 $5 $6 $7 0 $9 ${11} ${12}
