@@ -7,4 +7,6 @@ int InitRandomMT ();
 
 unsigned int MTGenerate (double*);
 
+double MTRandom0to1 (double*);
+
 #endif

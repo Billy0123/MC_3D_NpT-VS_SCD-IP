@@ -6,20 +6,20 @@ import java.io.FileReader;
 import java.io.FileWriter;
 
 public class resultmerger {
-    String N,gaps,G,mN,mS,mD,badanieStart,badanieEnd,newDirectoryName;
+    String N,gaps,G,T,pDD,iPP,badanieStart,badanieEnd,newDirectoryName;
     
     String getDirectoryName(String badanieNumber) {
-        return "2D_N-"+N+"_gaps-"+gaps+"_G-"+G+"_badanie-"+badanieNumber+"_mN-"+mN+"_mS-"+mS+"_mD-"+mD;
+        return "3D_N-"+N+"_gaps-"+gaps+"_G-"+G+"_badanie-"+badanieNumber+"_T-"+T+"_pDD-"+pDD+"_iPP-"+iPP;
     }
     
-    public resultmerger (String newDirectoryName, String N, String gaps, String G, String mN, String mS, String mD, String badanieStart, String badanieEnd, int liczbaDanych) {
+    public resultmerger (String newDirectoryName, String N, String gaps, String G, String T, String pDD, String iPP, String badanieStart, String badanieEnd, int liczbaDanych) {
         this.newDirectoryName=newDirectoryName;
         this.N=N;
         this.gaps=gaps;
         this.G=G;
-        this.mN=mN;
-        this.mS=mS;
-        this.mD=mD;
+        this.T=T;
+        this.pDD=pDD;
+        this.iPP=iPP;
         this.badanieStart=badanieStart;
         this.badanieEnd=badanieEnd;
            

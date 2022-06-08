@@ -10,10 +10,11 @@
 
 typedef unsigned long long ulong;
 unsigned int MT[624];
-int mti = 0;
+int mti;
 
 void InitMT (unsigned int x0) {
     ulong x;
+    mti = 0;
 
     MT[0] = x0;
     for(int i = 1; i < 623; i++) {
@@ -30,7 +31,7 @@ int InitRandomMT () {
     return timeStart;
 }
 
-unsigned int MTGenerate (double* randomStartStep) {randomStartStep[1]++;
+unsigned int MTGenerate (double *randomStartStep) {randomStartStep[1]++;
     const unsigned int MA[] = {0,0x9908b0df};
     long int y;
     int i1,i397;
@@ -46,4 +47,8 @@ unsigned int MTGenerate (double* randomStartStep) {randomStartStep[1]++;
     y       ^=  y >> 18;
     mti      = i1;
     return y;
+}
+
+double MTRandom0to1 (double *randomStartStep) {
+    return MTGenerate(randomStartStep)/4294967295.0;  //32-bitowe slowo: maxValue=2^32-1=4294967295
 }

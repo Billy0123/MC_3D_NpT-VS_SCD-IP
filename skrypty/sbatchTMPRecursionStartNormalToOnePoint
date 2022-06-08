@@ -2,16 +2,17 @@
 #SBATCH --job-name=HCHRecSNTMP
 #SBATCH -p lng-1gpu
 #SBATCH --time=0-48:0:0
-#sbatch --no-requeue
+#SBATCH --mem-per-cpu=10M
+#SBATCH --no-requeue
 #SBATCH --output=output/OUT_HCH3120_100_%j.txt
 #SBATCH --error=output/ERR_HCH3120_100_%j.txt
 
-#$1-N, $2-gaps, $3-multimerS, $4-multimerD, $5-growing, $6-useSpecificDirectory (UWAGA: NIE 0), $7-pointNumber(from 0), $8-ile razy powtorzyc wykonanie jobu?, $9-iterationsNumber, $10-filterText, $11-generatorStartPoint, $12-multimerN
+#$1-N, $2-gaps, $3-growing, $4-useSpecificDirectory (UWAGA: NIE 0), $5-pointNumber(from 0), $6-ile razy powtorzyc wykonanie jobu?, $7-iterationsNumber, $8-filterText, $9-generatorStartPoint, $10-T, $11-polydisperseDelta, $12-invPotPower
 
 
 #UWAGA #1: SLURM nie tworzy indywidualnego folderu dla kazdego zadania (ponizej tworzony jest recznie)
-mkdir $TMPDIR/tmp_mb1991_$SLURM_JOB_ID
-cd $TMPDIR/tmp_mb1991_$SLURM_JOB_ID
+mkdir $TMPDIR/lustre/mb1991/tmp_mb1991_$SLURM_JOB_ID
+cd $TMPDIR/lustre/mb1991/tmp_mb1991_$SLURM_JOB_ID
 pwd
 echo "==============================="
 
@@ -21,13 +22,13 @@ cp $SLURM_SUBMIT_DIR/startArguments.txt .
 echo "files copied"
 
 #UWAGA #2: Mozna do programu zadac jobID rowny np. 'repeats left' (lub 'none' gdy to zwykla rekurencja [a nie onePoint]). Wtedy w przypadku ewentualnej reanimacji powinno byc latwiej (bo: komenda 'sacct' [i podobne], czy nawet zapis w ERR [jezeli akurat powstanie - na co liczyc nie mozna] da co prawda informacje o jobID nieudanego jobu, jednak NIE DA informacji o jobID jobu 'poprzedniego' [z ktorego on korzystal i ktorego znajomosc potrzebna jest do reanimacji]) - nie bedzie trzeba go szukac po folderach indywidualnie dla kazdego reanimowanego jobu.
-time srun ./program 2 $SLURM_JOBID $1 $2 $3 $4 $5 $9 $6 0 $7 ${11} ${12}
+time srun ./program 2 $SLURM_JOBID $1 $2 $3 $7 $4 0 $5 $9 ${10} ${11} ${12}
 
-cp -fr 2D_N-$1_gaps-$2_G-$5_badanie-$6_mN-${12}_mS-$3_mD-$4 $SLURM_SUBMIT_DIR
+cp -fr 3D_N-$1_gaps-$2_G-$3_badanie-$4_T-${10}_pDD-${11}_iPP-${12} $SLURM_SUBMIT_DIR
 #UWAGA #3: SLURM nie kasuje po sobie tempa automatycznie
-rm -r $TMPDIR/tmp_mb1991_$SLURM_JOB_ID
+rm -r $TMPDIR/lustre/mb1991/tmp_mb1991_$SLURM_JOB_ID
 
 cd $SLURM_SUBMIT_DIR
-sbatch --job-name=${10}G$5B$6P$7R$(($8 - 1)) --output=output/OUT_HC${12}_$1_gaps-$2_mS-$3_mD-$4_G-$5_B-$6_P-$7_R-$(($8 - 1))_%j.txt --error=output/ERR_HC${12}_$1_gaps-$2_mS-$3_mD-$4_G-$5_B-$6_P-$7_R-$(($8 - 1))_%j.txt sbatchTMPRecursionOnePoint $SLURM_JOBID $1 $2 $3 $4 $5 $7 $6 $(($8 - 1)) ${10} ${12};
+sbatch --job-name=$8G$3B$4P$5R$(($6 - 1)) --output=output/OUT_HC$1_gaps-$2_G-$3_B-$4_P-$5_R-$(($6 - 1))_T-${10}_pDD-${11}_iPP-${12}_%j.txt --error=output/ERR_HC$1_gaps-$2_G-$3_B-$4_P-$5_R-$(($6 - 1))_T-${10}_pDD-${11}_iPP-${12}_%j.txt sbatchTMPRecursionOnePoint $SLURM_JOBID $1 $2 $3 $5 $4 $(($6 - 1)) $8 ${10} ${11} ${12};
 
 exit 0
